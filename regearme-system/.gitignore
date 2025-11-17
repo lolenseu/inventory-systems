@@ -1,5 +1,7 @@
 # Laravel specific
 /app/.env
+/app/.env.local
+/app/.env.production
 /app/vendor/
 /node_modules
 /public/hot
@@ -84,3 +86,6 @@ laravel.log
 # Temporary files
 *.tmp
 *.temp
+
+# Zip files
+/app.zip
