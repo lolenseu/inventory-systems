@@ -1,0 +1,86 @@
+# Laravel specific
+/app/.env
+/app/vendor/
+/node_modules
+/public/hot
+/public/storage
+/storage/*.key
+/.env
+/.env.*.local
+/.env.local
+/.env.production
+
+# Composer
+/app/vendor/
+composer.lock
+composer.phar
+
+# NPM
+/node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Laravel storage and cache
+/app/storage/framework/cache/
+/app/storage/framework/sessions/
+/app/storage/framework/views/
+/app/storage/logs/
+/app/bootstrap/cache/
+
+# Development tools
+/.idea
+/.vscode
+/.nova
+.phpunit.result.cache
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# Logs
+*.log
+laravel.log
+
+# Backpack
+/public/vendor/backpack
+
+# Laravel Reverb
+/reverb
+
+# Testing
+/coverage
+
+# Deployment
+/.deploy
+/.env.example
+
+# Database
+*.sql
+*.sqlite
+/database/database.sqlite
+
+# SSL certificates
+*.crt
+*.key
+*.pem
+
+# User uploads (if stored locally)
+/app/storage/app/public/uploads/
+/app/storage/app/private/
+
+# Temporary files
+*.tmp
+*.temp
