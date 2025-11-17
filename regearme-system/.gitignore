@@ -1,8 +1,8 @@
 # Laravel specific
-/app/.env
-/app/.env.local
-/app/.env.production
-/app/vendor/
+/regearme/.env
+/regearme/.env.local
+/regearme/.env.production
+/regearme/vendor/
 /node_modules
 /public/hot
 /public/storage
@@ -13,7 +13,7 @@
 /.env.production
 
 # Composer
-/app/vendor/
+/regearme/vendor/
 composer.lock
 composer.phar
 
@@ -24,11 +24,11 @@ yarn-debug.log*
 yarn-error.log*
 
 # Laravel storage and cache
-/app/storage/framework/cache/
-/app/storage/framework/sessions/
-/app/storage/framework/views/
-/app/storage/logs/
-/app/bootstrap/cache/
+/regearme/storage/framework/cache/
+/regearme/storage/framework/sessions/
+/regearme/storage/framework/views/
+/regearme/storage/logs/
+/regearme/bootstrap/cache/
 
 # Development tools
 /.idea
@@ -80,12 +80,12 @@ laravel.log
 *.pem
 
 # User uploads (if stored locally)
-/app/storage/app/public/uploads/
-/app/storage/app/private/
+/regearme/storage/app/public/uploads/
+/regearme/storage/app/private/
 
 # Temporary files
 *.tmp
 *.temp
 
 # Zip files
-/app.zip
+/regearme.zip
