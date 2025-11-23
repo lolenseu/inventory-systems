@@ -56,26 +56,81 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Search functionality
+    // Search functionality - Enhanced with API call
     const searchInput = document.getElementById('search-input');
     const searchBtn = document.getElementById('search-btn');
-    searchBtn.addEventListener('click', function() {
-        const query = searchInput.value.toLowerCase().trim();
-        const products = document.querySelectorAll('#products-section .product');
-        let visibleCount = 0;
-        products.forEach(product => {
-            const name = product.querySelector('h3').textContent.toLowerCase();
-            if (query === '' || name.includes(query)) {
-                product.style.display = 'block';
-                visibleCount++;
-            } else {
-                product.style.display = 'none';
-            }
-        });
-        if (query !== '' && visibleCount === 0) {
-            showMessage('No products found', 'warning');
+    
+    // Search on button click
+    searchBtn.addEventListener('click', performSearch);
+    
+    // Search on enter key
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            performSearch();
         }
     });
+
+    async function performSearch() {
+        const query = searchInput.value.trim();
+        
+        if (!query) {
+            showMessage('Please enter a search query', 'warning');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/shopai/search?q=${encodeURIComponent(query)}`, {
+                headers: {
+                    'Accept': 'application/json',
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Update products section with search results
+                updateProductsDisplay(data.products, query);
+                showMessage(`Found ${data.count} products for "${query}"`, 'success');
+            } else {
+                showMessage(data.error || 'Search failed', 'error');
+                // Show all products if search fails
+                window.location.reload();
+            }
+        } catch (err) {
+            showMessage('Search service unavailable', 'error');
+        }
+    }
+
+    function updateProductsDisplay(products, query) {
+        const productsContainer = document.querySelector('.product-grid');
+        productsContainer.innerHTML = '';
+        
+        if (products.length === 0) {
+            productsContainer.innerHTML = '<p class="no-products">No products found for your search.</p>';
+            return;
+        }
+        
+        products.forEach(product => {
+            const productDiv = document.createElement('div');
+            productDiv.className = 'product';
+            productDiv.dataset.productId = product.id;
+            
+            productDiv.innerHTML = `
+                <div class="product-image">
+                    <img src="${product.image_url || '/img/default-product.jpg'}" alt="${product.name}">
+                    ${product.quantity <= 0 ? '<div class="out-of-stock">Out of Stock</div>' : ''}
+                </div>
+                <h3>${product.name}</h3>
+                <p class="price">₱ ${Number(product.price).toLocaleString('en-PH')}</p>
+                ${product.quantity > 0 ? 
+                    `<button class="view-product-btn" onclick="openProductModal(${product.id})">View Details</button>` :
+                    `<button class="view-product-btn disabled">Out of Stock</button>`
+                }
+            `;
+            
+            productsContainer.appendChild(productDiv);
+        });
+    }
 
     // Back to top - fixed ID
     window.onscroll = function() {
@@ -100,9 +155,36 @@ document.addEventListener('DOMContentLoaded', function() {
     // Cart functions
     const cartCount = document.querySelector('.cart-count');
     function updateCartCount() {
-        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-        cartCount.textContent = totalItems;
+        const customer = JSON.parse(localStorage.getItem('customer') || 'null');
+        if (customer) {
+            // Use server cart
+            fetchCartFromServer();
+        } else {
+            // Use local storage cart
+            let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            cartCount.textContent = totalItems;
+        }
+    }
+
+    async function fetchCartFromServer() {
+        try {
+            const response = await fetch('/shopai/cart', {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const totalItems = data.cart_items.reduce((sum, item) => sum + item.quantity, 0);
+                cartCount.textContent = totalItems;
+            }
+        } catch (err) {
+            console.error('Error fetching cart:', err);
+        }
     }
 
     // Auth functions
@@ -119,7 +201,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (customerStr) {
             if (confirm('Are you sure you want to log out?')) {
                 localStorage.removeItem('customer');
+                localStorage.removeItem('cart');
                 this.textContent = 'Login / Signup';
+                updateCartCount();
                 showMessage('Logged out successfully!');
             }
         } else {
@@ -164,7 +248,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem('customer', JSON.stringify(data.customer));
                 authBtn.textContent = `Hi, ${data.customer.full_name}`;
                 authModal.style.display = 'none';
+                updateCartCount();
                 showMessage(data.message || 'Login successful!');
+                e.target.reset();
             } else {
                 showMessage(data.error || 'Login failed', 'error');
             }
@@ -191,7 +277,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem('customer', JSON.stringify(data.customer));
                 authBtn.textContent = `Hi, ${data.customer.full_name}`;
                 authModal.style.display = 'none';
+                updateCartCount();
                 showMessage(data.message || 'Registration successful!');
+                e.target.reset();
             } else {
                 let errMsg = 'Registration failed';
                 if (data.errors) {
@@ -238,45 +326,91 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // Add to cart
-    document.getElementById('addToCartBtn').addEventListener('click', function() {
+    // Add to cart - Enhanced for server cart
+    document.getElementById('addToCartBtn').addEventListener('click', async function() {
+        const customer = JSON.parse(localStorage.getItem('customer') || 'null');
+        if (!customer) {
+            showMessage('Please login to add items to cart', 'warning');
+            productModal.style.display = 'none';
+            authModal.style.display = 'block';
+            return;
+        }
+
         const id = productModal.dataset.productId;
         const qty = parseInt(document.getElementById('quantity').value);
         if (!id || qty <= 0) return;
-        const name = document.getElementById('modalProductName').textContent;
-        const priceStr = document.getElementById('modalProductPrice').textContent.replace(/[₱ ,]/g, '');
-        const price = parseFloat(priceStr);
-        const img = document.getElementById('modalProductImage').src;
-        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        const existingIdx = cart.findIndex(item => item.id == id);
-        if (existingIdx > -1) {
-            cart[existingIdx].quantity += qty;
-        } else {
-            cart.push({id, name, price, image: img, quantity: qty});
+
+        try {
+            const response = await fetch('/shopai/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    product_id: id,
+                    quantity: qty
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                showMessage(`${qty} item(s) added to cart!`, 'success');
+                productModal.style.display = 'none';
+                updateCartCount();
+            } else {
+                showMessage(data.error || 'Failed to add to cart', 'error');
+            }
+        } catch (err) {
+            showMessage('Network error', 'error');
         }
-        localStorage.setItem('cart', JSON.stringify(cart));
-        updateCartCount();
-        showMessage(`${qty} item(s) added to cart!`);
-        productModal.style.display = 'none';
     });
 
-    // Buy now
-    document.querySelector('.buy-now-btn').addEventListener('click', function() {
+    // Buy now - Enhanced
+    document.querySelector('.buy-now-btn').addEventListener('click', async function() {
+        const customer = JSON.parse(localStorage.getItem('customer') || 'null');
+        if (!customer) {
+            showMessage('Please login to purchase', 'warning');
+            productModal.style.display = 'none';
+            authModal.style.display = 'block';
+            return;
+        }
+
         const id = productModal.dataset.productId;
         const qty = parseInt(document.getElementById('quantity').value);
         if (!id || qty <= 0) return;
-        const name = document.getElementById('modalProductName').textContent;
-        const priceStr = document.getElementById('modalProductPrice').textContent.replace(/[₱ ,]/g, '');
-        const price = parseFloat(priceStr);
-        const img = document.getElementById('modalProductImage').src;
-        const cart = [{id, name, price, image: img, quantity: qty}];
-        localStorage.setItem('cart', JSON.stringify(cart));
-        updateCartCount();
-        showMessage('Proceeding to checkout');
-        productModal.style.display = 'none';
-        // Open cart modal
-        loadCartItems();
-        document.getElementById('cartModal').style.display = 'block';
+
+        try {
+            const response = await fetch('/shopai/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    product_id: id,
+                    quantity: qty
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                showMessage('Item added to cart, proceeding to checkout', 'success');
+                productModal.style.display = 'none';
+                updateCartCount();
+                // Open cart modal
+                loadCartItems();
+                document.getElementById('cartModal').style.display = 'block';
+            } else {
+                showMessage(data.error || 'Failed to add to cart', 'error');
+            }
+        } catch (err) {
+            showMessage('Network error', 'error');
+        }
     });
 
     // Cart modal
@@ -291,7 +425,18 @@ document.addEventListener('DOMContentLoaded', function() {
         cartModal.style.display = 'block';
     });
 
-    function loadCartItems() {
+    async function loadCartItems() {
+        const customer = JSON.parse(localStorage.getItem('customer') || 'null');
+        if (!customer) {
+            // Use local storage cart
+            loadLocalCart();
+        } else {
+            // Use server cart
+            loadServerCart();
+        }
+    }
+
+    function loadLocalCart() {
         let cart = JSON.parse(localStorage.getItem('cart') || '[]');
         const cartItemsEl = document.getElementById('cartItems');
         cartItemsEl.innerHTML = '';
@@ -305,21 +450,62 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="cart-item-name">${item.name}</div>
                     <div class="cart-item-price">₱ ${item.price.toLocaleString()}</div>
                     <div class="cart-item-quantity">
-                        Qty: <input type="number" min="1" value="${item.quantity}" onchange="updateCartItem(${index}, this.value)">
+                        Qty: <input type="number" min="1" value="${item.quantity}" onchange="updateLocalCartItem(${index}, this.value)">
                     </div>
                 </div>
-                <button class="cart-item-remove" onclick="removeCartItem(${index})">&times;</button>
+                <button class="cart-item-remove" onclick="removeLocalCartItem(${index})">&times;</button>
             `;
             cartItemsEl.appendChild(itemDiv);
             subtotal += item.price * item.quantity;
         });
         document.getElementById('cartSubtotal').textContent = `₱ ${subtotal.toLocaleString()}`;
         document.getElementById('cartTotal').textContent = `₱ ${subtotal.toLocaleString()}`;
-        updateCartCount();
+    }
+
+    async function loadServerCart() {
+        try {
+            const response = await fetch('/shopai/cart', {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const cartItemsEl = document.getElementById('cartItems');
+                cartItemsEl.innerHTML = '';
+                let subtotal = 0;
+                
+                data.cart_items.forEach((item, index) => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'cart-item';
+                    itemDiv.innerHTML = `
+                        <div class="cart-item-image"><img src="${item.product.image_url || '/img/default-product.jpg'}" alt="${item.product.name}"></div>
+                        <div class="cart-item-details">
+                            <div class="cart-item-name">${item.product.name}</div>
+                            <div class="cart-item-price">₱ ${item.product.price.toLocaleString()}</div>
+                            <div class="cart-item-quantity">
+                                Qty: <input type="number" min="1" max="${item.product.quantity}" value="${item.quantity}" onchange="updateServerCartItem(${item.id}, this.value)">
+                            </div>
+                        </div>
+                        <button class="cart-item-remove" onclick="removeServerCartItem(${item.id})">&times;</button>
+                    `;
+                    cartItemsEl.appendChild(itemDiv);
+                    subtotal += item.product.price * item.quantity;
+                });
+                
+                document.getElementById('cartSubtotal').textContent = `₱ ${subtotal.toLocaleString()}`;
+                document.getElementById('cartTotal').textContent = `₱ ${subtotal.toLocaleString()}`;
+            }
+        } catch (err) {
+            console.error('Error loading server cart:', err);
+        }
     }
 
     // Global cart functions
-    window.updateCartItem = function(index, qtyStr) {
+    window.updateLocalCartItem = function(index, qtyStr) {
         const qty = parseInt(qtyStr);
         let cart = JSON.parse(localStorage.getItem('cart') || '[]');
         if (qty > 0) {
@@ -328,30 +514,246 @@ document.addEventListener('DOMContentLoaded', function() {
             cart.splice(index, 1);
         }
         localStorage.setItem('cart', JSON.stringify(cart));
-        loadCartItems();
+        loadLocalCart();
     };
 
-    window.removeCartItem = function(index) {
+    window.removeLocalCartItem = function(index) {
         let cart = JSON.parse(localStorage.getItem('cart') || '[]');
         cart.splice(index, 1);
         localStorage.setItem('cart', JSON.stringify(cart));
-        loadCartItems();
+        loadLocalCart();
     };
 
-    // Checkout
+    window.updateServerCartItem = async function(cartId, qtyStr) {
+        const qty = parseInt(qtyStr);
+        if (qty <= 0) return;
+
+        try {
+            const response = await fetch(`/shopai/cart/${cartId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    quantity: qty
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                showMessage('Cart updated successfully', 'success');
+                loadCartItems();
+            } else {
+                showMessage(data.error || 'Failed to update cart', 'error');
+            }
+        } catch (err) {
+            showMessage('Network error', 'error');
+        }
+    };
+
+    window.removeServerCartItem = async function(cartId) {
+        if (!confirm('Are you sure you want to remove this item?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/shopai/cart/${cartId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                }
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                showMessage('Item removed from cart', 'success');
+                loadCartItems();
+            } else {
+                showMessage(data.error || 'Failed to remove item', 'error');
+            }
+        } catch (err) {
+            showMessage('Network error', 'error');
+        }
+    };
+
+    // Checkout modal
+    const checkoutModal = document.getElementById('checkoutModal');
+    const ordersModal = document.getElementById('ordersModal');
+    
+    // Checkout button
     document.querySelector('.checkout-btn').addEventListener('click', function() {
-        const customer = localStorage.getItem('customer');
+        const customer = JSON.parse(localStorage.getItem('customer') || 'null');
         if (!customer) {
             showMessage('Please login to checkout', 'warning');
             cartModal.style.display = 'none';
             authModal.style.display = 'block';
             return;
         }
-        showMessage('Redirecting to payment... (Implement full checkout)', 'warning');
-        // localStorage.removeItem('cart'); or post to server
+        
+        loadCartItems();
+        loadCheckoutSummary();
+        cartModal.style.display = 'none';
+        checkoutModal.style.display = 'block';
     });
 
+    function loadCheckoutSummary() {
+        const customer = JSON.parse(localStorage.getItem('customer') || 'null');
+        if (!customer) return;
+
+        fetch('/shopai/cart', {
+            headers: {
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': token,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                let subtotal = 0;
+                data.cart_items.forEach(item => {
+                    subtotal += item.product.price * item.quantity;
+                });
+                
+                document.getElementById('checkoutSubtotal').textContent = `₱ ${subtotal.toLocaleString()}`;
+                document.getElementById('checkoutTotal').textContent = `₱ ${subtotal.toLocaleString()}`;
+            }
+        })
+        .catch(err => {
+            console.error('Error loading checkout summary:', err);
+        });
+    }
+
+    // Checkout form submit
+    document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const orderData = {
+            shipping_address: formData.get('shipping_address'),
+            phone: formData.get('phone'),
+            notes: formData.get('notes')
+        };
+
+        try {
+            const response = await fetch('/shopai/checkout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify(orderData)
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                showMessage(`Order placed successfully! Order #${data.order_number}`, 'success');
+                checkoutModal.style.display = 'none';
+                e.target.reset();
+                updateCartCount();
+            } else {
+                showMessage(data.error || 'Checkout failed', 'error');
+            }
+        } catch (err) {
+            showMessage('Network error', 'error');
+        }
+    });
+
+    // Close checkout modal
+    document.getElementById('closeCheckoutModal').addEventListener('click', () => checkoutModal.style.display = 'none');
+    document.getElementById('cancelCheckoutBtn').addEventListener('click', () => checkoutModal.style.display = 'none');
+    window.addEventListener('click', (e) => {
+        if (e.target === checkoutModal) checkoutModal.style.display = 'none';
+    });
+
+    // Orders modal
     document.getElementById('continueShoppingBtn').addEventListener('click', () => cartModal.style.display = 'none');
+
+    // Load orders
+    async function loadOrders() {
+        const customer = JSON.parse(localStorage.getItem('customer') || 'null');
+        if (!customer) return;
+
+        try {
+            const response = await fetch('/shopai/orders', {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': token,
+                }
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                const ordersList = document.getElementById('ordersList');
+                ordersList.innerHTML = '';
+                
+                if (data.orders.length === 0) {
+                    ordersList.innerHTML = '<p class="no-orders">No orders found.</p>';
+                    return;
+                }
+                
+                data.orders.forEach(order => {
+                    const orderDiv = document.createElement('div');
+                    orderDiv.className = 'order-item';
+                    orderDiv.innerHTML = `
+                        <div class="order-header">
+                            <div class="order-info">
+                                <h4>Order #${order.order_number}</h4>
+                                <span class="order-date">${new Date(order.created_at).toLocaleDateString()}</span>
+                                <span class="badge ${order.status_badge.color}">${order.status_badge.text}</span>
+                            </div>
+                            <div class="order-total">
+                                <strong>Total: ₱ ${Number(order.total_amount).toLocaleString()}</strong>
+                            </div>
+                        </div>
+                        <div class="order-items">
+                            ${order.items.map(item => `
+                                <div class="order-item-details">
+                                    <img src="${item.product.image_url || '/img/default-product.jpg'}" alt="${item.product.name}" class="order-item-image">
+                                    <div class="order-item-info">
+                                        <span class="order-item-name">${item.product.name}</span>
+                                        <span class="order-item-quantity">Qty: ${item.quantity}</span>
+                                        <span class="order-item-price">₱ ${Number(item.price).toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                    ordersList.appendChild(orderDiv);
+                });
+            }
+        } catch (err) {
+            console.error('Error loading orders:', err);
+        }
+    }
+
+    // Orders button - Add this to your navigation or header
+    // You can add a button like: <button id="ordersBtn">My Orders</button>
+    if (document.getElementById('ordersBtn')) {
+        document.getElementById('ordersBtn').addEventListener('click', function() {
+            const customer = JSON.parse(localStorage.getItem('customer') || 'null');
+            if (!customer) {
+                showMessage('Please login to view orders', 'warning');
+                authModal.style.display = 'block';
+                return;
+            }
+            loadOrders();
+            ordersModal.style.display = 'block';
+        });
+    }
+
+    // Close orders modal
+    document.getElementById('closeOrdersModal').addEventListener('click', () => ordersModal.style.display = 'none');
+    window.addEventListener('click', (e) => {
+        if (e.target === ordersModal) ordersModal.style.display = 'none';
+    });
 
     // Init cart count
     updateCartCount();
