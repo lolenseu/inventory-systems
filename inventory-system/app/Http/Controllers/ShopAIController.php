@@ -235,23 +235,6 @@ class ShopAIController extends Controller
     /**
      * API endpoint to get top expensive products for slideshow
      */
-    public function getTopProducts()
-    {
-        $products = Product::where('quantity', '>', 0)
-            ->where('price', '>', 0)
-            ->orderBy('price', 'desc')
-            ->limit(5)
-            ->get(['id', 'name', 'description', 'price', 'image_url']);
-
-        return response()->json([
-            'success' => true,
-            'products' => $products
-        ]);
-    }
-
-    /**
-     * API endpoint to get all products
-     */
     public function getProducts()
     {
         $products = Product::where('quantity', '>', 0)
@@ -262,6 +245,28 @@ class ShopAIController extends Controller
         return response()->json([
             'success' => true,
             'products' => $products
+        ]);
+    }
+
+    /**
+     * Get single product details for modal
+     */
+    public function getProduct($id)
+    {
+        $product = Product::where('id', $id)
+            ->where('quantity', '>', 0)
+            ->first(['id', 'name', 'description', 'price', 'image_url', 'quantity']);
+
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Product not found or out of stock'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'product' => $product
         ]);
     }
 }

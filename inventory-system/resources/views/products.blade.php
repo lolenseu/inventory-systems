@@ -62,26 +62,26 @@
           <td>{{ $product->supplier ? $product->supplier->name : 'N/A' }}</td>
           <td class="status-cell {{ $statusClass }}">{{ $statusLabel }}</td>
           <td>
-                <button type="button" class="view-btn"
-                  data-id="{{ $product->id }}"
-                  data-sku="{{ $product->sku }}"
-                  data-name="{{ $product->name }}"
-                  data-description="{{ $product->description }}"
-                  data-quantity="{{ $product->quantity }}"
-                  data-price="{{ $product->price }}"
-                  data-supplier-id="{{ $product->supplier_id }}"
-                  data-supplier-name="{{ $product->supplier ? $product->supplier->name : '' }}"
-                  data-image-url="{{ $product->image_url }}">View</button>
-                <button type="button" class="edit-btn"
-                  data-id="{{ $product->id }}"
-                  data-sku="{{ $product->sku }}"
-                  data-name="{{ $product->name }}"
-                  data-description="{{ $product->description }}"
-                  data-quantity="{{ $product->quantity }}"
-                  data-price="{{ $product->price }}"
-                  data-supplier-id="{{ $product->supplier_id }}"
-                  data-supplier-name="{{ $product->supplier ? $product->supplier->name : '' }}"
-                  data-image-url="{{ $product->image_url }}">Edit</button>
+            <button type="button" class="view-btn"
+              data-id="{{ $product->id }}"
+              data-sku="{{ $product->sku }}"
+              data-name="{{ $product->name }}"
+              data-description="{{ $product->description }}"
+              data-quantity="{{ $product->quantity }}"
+              data-price="{{ $product->price }}"
+              data-supplier-id="{{ $product->supplier_id }}"
+              data-supplier-name="{{ $product->supplier ? $product->supplier->name : '' }}"
+              data-image-url="{{ $product->image && $product->image_type ? 'data:' . $product->image_type . ';base64,' . base64_encode($product->image) : '' }}">View</button>
+            <button type="button" class="edit-btn"
+              data-id="{{ $product->id }}"
+              data-sku="{{ $product->sku }}"
+              data-name="{{ $product->name }}"
+              data-description="{{ $product->description }}"
+              data-quantity="{{ $product->quantity }}"
+              data-price="{{ $product->price }}"
+              data-supplier-id="{{ $product->supplier_id }}"
+              data-supplier-name="{{ $product->supplier ? $product->supplier->name : '' }}"
+              data-image-url="{{ $product->image && $product->image_type ? 'data:' . $product->image_type . ';base64,' . base64_encode($product->image) : '' }}">Edit</button>
             <button type="button" class="delete-btn" data-id="{{ $product->id }}">Delete</button>
           </td>
         </tr>

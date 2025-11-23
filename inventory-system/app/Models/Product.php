@@ -27,17 +27,17 @@ class Product extends Model
         'price' => 'decimal:2',
     ];
 
-    protected $appends = ['image'];
+    protected $appends = ['image_url'];
 
     public function supplier()
-    {
+      {
         return $this->belongsTo(Supplier::class);
     }
 
     public function getImageUrlAttribute()
     {
-        if ($this->image_data && $this->image_type) {
-            return 'data:' . $this->image_type . ';base64,' . $this->image_data;
+        if ($this->image && $this->image_type) {
+            return 'data:' . $this->image_type . ';base64,' . base64_encode($this->image);
         }
         return null;
     }

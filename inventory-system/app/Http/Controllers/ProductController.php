@@ -12,7 +12,8 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $query = Product::with('supplier:id,name')
-            ->select('id', 'sku', 'name', 'description', 'quantity', 'price', 'supplier_id', 'created_at'); // Exclude 'image', 'image_type' to save memory
+            ->select('id', 'sku', 'name', 'description', 'quantity', 'price', 'supplier_id', 'image', 'image_type', 'created_at');
+
 
         if ($request->filled('q')) {
             $q = $request->get('q');
@@ -69,14 +70,10 @@ class ProductController extends Controller
 
         $data = $validator->validated();
         
-        // Handle image upload with compression
+        // Handle image upload
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            
-            // Compress and resize image to reduce memory usage
-            $compressedImage = $this->compressImage($image);
-            
-            $data['image'] = $compressedImage;
+            $data['image'] = file_get_contents($image->getRealPath());
             $data['image_type'] = $image->getMimeType();
         } else {
             $data['image'] = null;
@@ -109,14 +106,10 @@ class ProductController extends Controller
 
         $data = $validator->validated();
         
-        // Handle image upload with compression
+        // Handle image upload
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            
-            // Compress and resize image to reduce memory usage
-            $compressedImage = $this->compressImage($image);
-            
-            $data['image'] = $compressedImage;
+            $data['image'] = file_get_contents($image->getRealPath());
             $data['image_type'] = $image->getMimeType();
         }
 

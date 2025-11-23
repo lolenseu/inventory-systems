@@ -18,7 +18,6 @@ return new class extends Migration
             $table->unsignedBigInteger('supplier_id')->nullable();
             $table->binary('image')->nullable();
             $table->string('image_type', 50)->nullable();
-            $table->foreign('supplier_id')->references('id')->on('suppliers')->onDelete('set null');
             $table->timestamps();
         });
     }

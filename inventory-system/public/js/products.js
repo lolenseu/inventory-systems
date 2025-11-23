@@ -258,16 +258,16 @@ document.addEventListener('DOMContentLoaded', function(){
       
       // Reset image preview first
       if (imagePreview && imageUploadArea && placeholder) {
-        imagePreview.style.display = 'none';
-        imagePreview.src = '';
-        placeholder.style.display = 'flex';
+          imagePreview.style.display = 'none';
+          imagePreview.src = '';
+          placeholder.style.display = 'flex';
       }
       
       // Show existing image if available
-      if (imageUrl && imageUrl !== 'null' && imagePreview && imageUploadArea && placeholder) {
-        imagePreview.src = imageUrl;
-        imagePreview.style.display = 'block';
-        placeholder.style.display = 'none';
+      if (imageUrl && imageUrl !== 'null' && imageUrl !== '' && imagePreview && imageUploadArea && placeholder) {
+          imagePreview.src = imageUrl;
+          imagePreview.style.display = 'block';
+          placeholder.style.display = 'none';
       }
 
       const editModal = document.getElementById('editModal');
@@ -319,14 +319,14 @@ document.addEventListener('DOMContentLoaded', function(){
       // Handle image display for view
       const imageUrl = btn.getAttribute('data-image-url');
       
-      if (imageUrl && imageUrl !== 'null' && viewImageView) {
+      if (imageUrl && imageUrl !== 'null' && imageUrl !== '' && viewImageView) {
         viewImageView.innerHTML = `
           <div style="margin-bottom: 15px; text-align: center;">
             <strong>Product Image</strong>
           </div>
           <img src="${imageUrl}" 
-               style="max-width: 200px; max-height: 200px; border-radius: 12px; object-fit: cover;" 
-               alt="Product Image">
+            style="max-width: 200px; max-height: 200px; border-radius: 12px; object-fit: cover;" 
+            alt="Product Image">
         `;
       } else if (viewImageView) {
         viewImageView.innerHTML = `
