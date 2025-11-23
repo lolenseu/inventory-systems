@@ -15,10 +15,10 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->integer('quantity')->default(0);
             $table->decimal('price', 12, 2)->default(0.00);
-            $table->longText('image_data')->nullable();
-            $table->string('image_type', 50)->nullable();
             $table->unsignedBigInteger('supplier_id')->nullable();
-
+            $table->binary('image')->nullable();
+            $table->string('image_type', 50)->nullable();
+            $table->foreign('supplier_id')->references('id')->on('suppliers')->onDelete('set null');
             $table->timestamps();
         });
     }

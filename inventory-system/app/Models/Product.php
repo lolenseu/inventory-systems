@@ -18,7 +18,7 @@ class Product extends Model
         'quantity',
         'price',
         'supplier_id',
-        'image_data',
+        'image',
         'image_type',
     ];
 
@@ -27,7 +27,7 @@ class Product extends Model
         'price' => 'decimal:2',
     ];
 
-    protected $appends = ['image_url'];
+    protected $appends = ['image'];
 
     public function supplier()
     {
