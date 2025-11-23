@@ -38,19 +38,38 @@ Route::middleware(['auth'])->group(function () {
 });
  
 // Main ShopAI page
-Route::get('/', [ShopAIController::class, 'index'])->name('shopai.index');
 Route::get('/shopai', [ShopAIController::class, 'index'])->name('shopai.home');
 
-// Authentication routes
-Route::prefix('api')->group(function () {
+// Search route
+Route::get('/shopai/search', [ShopAIController::class, 'search'])->name('shopai.search');
+
+// API routes
+Route::prefix('shopai')->group(function () {
     Route::post('/register', [ShopAIController::class, 'register'])->name('customer.register');
     Route::post('/login', [ShopAIController::class, 'login'])->name('customer.login');
-    Route::post('/logout', [ShopAIController::class, 'logout'])->name('customer.logout')->middleware('auth');
+    Route::post('/logout', [ShopAIController::class, 'logout'])->name('customer.logout');
+    
+    // Product routes
+    Route::get('/products', [ShopAIController::class, 'getProducts'])->name('customer.products');
+    Route::get('/product/{id}', [ShopAIController::class, 'getProduct'])->name('customer.product');
     
     // Protected routes
     Route::middleware('auth')->group(function () {
         Route::get('/profile', [ShopAIController::class, 'profile'])->name('customer.profile');
         Route::put('/profile', [ShopAIController::class, 'updateProfile'])->name('customer.updateProfile');
         Route::put('/change-password', [ShopAIController::class, 'changePassword'])->name('customer.changePassword');
+        
+        // Cart routes
+        Route::post('/cart/add', [ShopAIController::class, 'addToCart'])->name('customer.addToCart');
+        Route::get('/cart', [ShopAIController::class, 'getCart'])->name('customer.getCart');
+        Route::put('/cart/{id}', [ShopAIController::class, 'updateCart'])->name('customer.updateCart');
+        Route::delete('/cart/{id}', [ShopAIController::class, 'removeCartItem'])->name('customer.removeCartItem');
+        
+        // Checkout route
+        Route::post('/checkout', [ShopAIController::class, 'checkout'])->name('customer.checkout');
+        
+        // Orders routes
+        Route::get('/orders', [ShopAIController::class, 'getOrders'])->name('customer.orders');
+        Route::get('/order/{id}', [ShopAIController::class, 'getOrder'])->name('customer.order');
     });
 });

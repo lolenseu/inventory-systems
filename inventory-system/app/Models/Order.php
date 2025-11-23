@@ -12,24 +12,49 @@ class Order extends Model
     protected $table = 'orders';
 
     protected $fillable = [
-        'customer_name',
-        'product_id',
-        'quantity',
-        'unit_price',
-        'total_price',
+        'customer_id',
+        'order_number',
+        'total_amount',
         'status',
+        'shipping_address',
+        'phone',
         'notes',
     ];
 
     protected $casts = [
-        'quantity' => 'integer',
-        'unit_price' => 'decimal:2',
-        'total_price' => 'decimal:2',
+        'total_amount' => 'decimal:2',
         'status' => 'string',
     ];
 
-    public function product()
+    protected $appends = ['status_badge'];
+
+    public function customer()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function items()
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    public function getStatusBadgeAttribute()
+    {
+        $colors = [
+            'pending' => 'warning',
+            'approved' => 'success',
+            'cancelled' => 'danger',
+            'delivered' => 'info'
+        ];
+        
+        return [
+            'text' => ucfirst($this->status),
+            'color' => $colors[$this->status] ?? 'secondary'
+        ];
+    }
+
+    public static function generateOrderNumber()
+    {
+        return 'ORD-' . date('Ymd') . '-' . str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
     }
 }

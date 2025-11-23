@@ -253,6 +253,58 @@
       </div>
     </div>
 
+    <!-- Checkout Modal -->
+    <div id="checkoutModal" class="modal">
+      <div class="modal-content checkout-modal-content">
+        <span class="close-btn" id="closeCheckoutModal">×</span>
+        <h3>Checkout</h3>
+        <form id="checkoutForm">
+          <div class="form-group">
+            <label for="shipping_address">Shipping Address</label>
+            <textarea id="shipping_address" name="shipping_address" required placeholder="Enter your shipping address"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="text" id="phone" name="phone" required placeholder="Enter your phone number">
+          </div>
+          <div class="form-group">
+            <label for="notes">Additional Notes (Optional)</label>
+            <textarea id="notes" name="notes" placeholder="Any special instructions"></textarea>
+          </div>
+          <div class="cart-summary">
+            <h4>Order Summary</h4>
+            <div class="summary-row">
+              <span>Subtotal:</span>
+              <span id="checkoutSubtotal">₱0.00</span>
+            </div>
+            <div class="summary-row">
+              <span>Shipping:</span>
+              <span>₱0.00</span>
+            </div>
+            <div class="summary-row total">
+              <span>Total:</span>
+              <span id="checkoutTotal">₱0.00</span>
+            </div>
+          </div>
+          <div class="checkout-actions">
+            <button type="submit" class="place-order-btn">Place Order</button>
+            <button type="button" class="cancel-checkout-btn" id="cancelCheckoutBtn">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Orders Modal -->
+    <div id="ordersModal" class="modal">
+      <div class="modal-content orders-modal-content">
+        <span class="close-btn" id="closeOrdersModal">×</span>
+        <h3>My Orders</h3>
+        <div class="orders-list" id="ordersList">
+          <!-- Orders will be loaded here -->
+        </div>
+      </div>
+    </div>
+
     <button class="back-to-top" id="backToTop" onclick="scrollToTop()"><i class="fa fa-arrow-up"></i></button>
   </div>
   
