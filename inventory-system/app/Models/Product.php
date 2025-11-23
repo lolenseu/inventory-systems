@@ -18,8 +18,8 @@ class Product extends Model
         'quantity',
         'price',
         'supplier_id',
-        'image',
-        'image_url',
+        'image_data',
+        'image_type',
     ];
 
     protected $casts = [
@@ -36,11 +36,9 @@ class Product extends Model
 
     public function getImageUrlAttribute()
     {
-
-
-        if ($this->image_url) {
-            return asset($this->image_url);
+        if ($this->image_data && $this->image_type) {
+            return 'data:' . $this->image_type . ';base64,' . $this->image_data;
         }
         return null;
     }
-};
+}
