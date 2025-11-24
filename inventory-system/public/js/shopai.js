@@ -1,760 +1,396 @@
-// Slideshow and Dots - keep existing
-let slideIndex = 0;
-let slideInterval;
-showSlides();
+document.addEventListener('DOMContentLoaded', () => {
 
-function showSlides() {
-    let i;
-    let slides = document.getElementsByClassName("mySlides");
-    let dots = document.getElementsByClassName("dot");
-    for (i = 0; i < slides.length; i++) {
-        slides[i].style.display = "none";  
-    }
-    slideIndex++;
-    if (slideIndex > slides.length) {slideIndex = 1}    
-    for (i = 0; i < dots.length; i++) {
-        dots[i].className = dots[i].className.replace(" active", "");
-    }
-    slides[slideIndex-1].style.display = "block";  
-    dots[slideIndex-1].className += " active";
-    slideInterval = setTimeout(showSlides, 2000);
-}
+  /*  CONSTANTS  */
+  const token = document.querySelector('meta[name="csrf-token"]').content;
+  const searchInput = document.getElementById('search-input');
+  const searchBtn = document.getElementById('search-btn');
+  const authBtn = document.getElementById('authBtn');
+  const cartCount = document.querySelector('.cart-count');
+  const authModal = document.getElementById('authModal');
+  const productModal = document.getElementById('productModal');
+  const cartModal = document.getElementById('cartModal');
+  const checkoutModal = document.getElementById('checkoutModal');
 
-function currentSlide(n) {
-    clearTimeout(slideInterval);
-    slideIndex = n;
-    let slides = document.getElementsByClassName("mySlides");
-    let dots = document.getElementsByClassName("dot");
-    for (let i = 0; i < slides.length; i++) {
-        slides[i].style.display = "none";  
-    }
-    for (let i = 0; i < dots.length; i++) {
-        dots[i].className = dots[i].className.replace(" active", "");
-    }
-    slides[slideIndex-1].style.display = "block";  
-    dots[slideIndex-1].className += " active";
-    slideInterval = setTimeout(showSlides, 5000);
-}
+  /*  UTILITIES  */
+  function qs(s) { return document.querySelector(s); }
+  function qsa(s) { return document.querySelectorAll(s); }
+  function showModal(el) { el.style.display = 'block'; }
+  function hideModal(el) { el.style.display = 'none'; }
 
-function scrollToTop() {
-    document.body.scrollTop = 0;
-    document.documentElement.scrollTop = 0;
-}
+  function showMessage(msg, type = 'success') {
+    const box = qs('#message-container');
+    const div = document.createElement('div');
+    div.className = `message ${type}`;
+    div.textContent = msg;
+    box.appendChild(div);
+    setTimeout(() => div.remove(), 5000);
+  }
 
-// New code starts here
-document.addEventListener('DOMContentLoaded', function() {
-    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+  async function fetchJSON(url, options = {}) {
+    const res = await fetch(url, options);
+    return await res.json();
+  }
 
-    // Navigation links
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const section = this.getAttribute('data-section') + '-section';
-            document.getElementById(section).scrollIntoView({ behavior: 'smooth' });
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            this.classList.add('active');
-        });
+  /*  NAVIGATION  */
+  qsa('.nav-link').forEach(link => {
+    link.addEventListener('click', e => {
+      e.preventDefault();
+      qsa('.nav-link').forEach(l => l.classList.remove('active'));
+      link.classList.add('active');
+      const section = link.dataset.section + '-section';
+      document.getElementById(section).scrollIntoView({ behavior: 'smooth' });
     });
+  });
 
-    // Search functionality - Enhanced with API call
-    const searchInput = document.getElementById('search-input');
-    const searchBtn = document.getElementById('search-btn');
-    
-    // Search on button click
-    searchBtn.addEventListener('click', performSearch);
-    
-    // Search on enter key
-    searchInput.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            performSearch();
-        }
-    });
+  /*  SEARCH  */
+  searchBtn.addEventListener('click', doSearch);
+  searchInput.addEventListener('keypress', e => e.key === 'Enter' && doSearch());
 
-    async function performSearch() {
-        const query = searchInput.value.trim();
-        
-        if (!query) {
-            showMessage('Please enter a search query', 'warning');
-            return;
-        }
+  async function doSearch() {
+    const query = searchInput.value.trim();
+    if (!query) return showMessage('Please enter a search query', 'warning');
 
-        try {
-            const response = await fetch(`/shopai/search?q=${encodeURIComponent(query)}`, {
-                headers: {
-                    'Accept': 'application/json',
-                }
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                // Update products section with search results
-                updateProductsDisplay(data.products, query);
-                showMessage(`Found ${data.count} products for "${query}"`, 'success');
-            } else {
-                showMessage(data.error || 'Search failed', 'error');
-                // Show all products if search fails
-                window.location.reload();
-            }
-        } catch (err) {
-            showMessage('Search service unavailable', 'error');
-        }
+    const data = await fetchJSON(`/shopai/search?q=${encodeURIComponent(query)}`);
+    if (!data.success) return showMessage(data.error || 'Search failed', 'error');
+
+    updateProducts(data.products);
+    showMessage(`Found ${data.count} products for "${query}"`);
+  }
+
+  function updateProducts(products) {
+    const container = qs('.product-grid');
+    container.innerHTML = '';
+
+    if (products.length === 0) {
+      container.innerHTML = `<p class="no-products">No products found.</p>`;
+      return;
     }
 
-    function updateProductsDisplay(products, query) {
-        const productsContainer = document.querySelector('.product-grid');
-        productsContainer.innerHTML = '';
-        
-        if (products.length === 0) {
-            productsContainer.innerHTML = '<p class="no-products">No products found for your search.</p>';
-            return;
-        }
-        
-        products.forEach(product => {
-            const productDiv = document.createElement('div');
-            productDiv.className = 'product';
-            productDiv.dataset.productId = product.id;
-            
-            productDiv.innerHTML = `
-                <div class="product-image">
-                    <img src="${product.image_url || '/img/default-product.jpg'}" alt="${product.name}">
-                    ${product.quantity <= 0 ? '<div class="out-of-stock">Out of Stock</div>' : ''}
-                </div>
-                <h3>${product.name}</h3>
-                <p class="price">₱ ${Number(product.price).toLocaleString('en-PH')}</p>
-                ${product.quantity > 0 ? 
-                    `<button class="view-product-btn" onclick="openProductModal(${product.id})">View Details</button>` :
-                    `<button class="view-product-btn disabled">Out of Stock</button>`
-                }
-            `;
-            
-            productsContainer.appendChild(productDiv);
-        });
+    products.forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'product';
+      div.dataset.productId = p.id;
+      div.innerHTML = `
+        <div class="product-image">
+          <img src="${p.image_url || '/img/default-product.jpg'}">
+          ${p.quantity <= 0 ? '<div class="out-of-stock">Out of Stock</div>' : ''}
+        </div>
+        <h3>${p.name}</h3>
+        <p class="price">₱ ${Number(p.price).toLocaleString('en-PH')}</p>
+        <button class="view-product-btn ${p.quantity <= 0 ? 'disabled' : ''}"
+          ${p.quantity > 0 ? `onclick="openProductModal(${p.id})"` : ''}>
+          ${p.quantity > 0 ? 'View Details' : 'Out of Stock'}
+        </button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  /*  AUTH  */
+  const savedCustomer = JSON.parse(localStorage.getItem('customer') || 'null');
+  if (savedCustomer) authBtn.textContent = `Hi, ${savedCustomer.full_name}`;
+
+  authBtn.addEventListener('click', () => {
+    const cust = localStorage.getItem('customer');
+    if (!cust) return showModal(authModal);
+
+    if (confirm('Are you sure you want to log out?')) {
+      localStorage.removeItem('customer');
+      localStorage.removeItem('cart');
+      authBtn.textContent = 'Login / Signup';
+      updateCartCount();
+      showMessage('Logged out successfully');
     }
+  });
 
-    // Back to top - fixed ID
-    window.onscroll = function() {
-        const backToTopButton = document.getElementById("backToTop");
-        if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
-            backToTopButton.style.display = "block";
-        } else {
-            backToTopButton.style.display = "none";
-        }
-    };
+  qs('#closeAuthModal').onclick = () => hideModal(authModal);
+  window.onclick = e => { if (e.target === authModal) hideModal(authModal); };
 
-    // Message function
-    function showMessage(msg, type = 'success') {
-        const container = document.getElementById('message-container');
-        const message = document.createElement('div');
-        message.className = `message ${type}`;
-        message.textContent = msg;
-        container.appendChild(message);
-        setTimeout(() => message.remove(), 5000);
-    }
+  qs('#showRegister').onclick = e => {
+    e.preventDefault();
+    qs('#loginForm').style.display = 'none';
+    qs('#registerForm').style.display = 'block';
+  };
+  qs('#showLogin').onclick = e => {
+    e.preventDefault();
+    qs('#registerForm').style.display = 'none';
+    qs('#loginForm').style.display = 'block';
+  };
 
-    // Cart functions
-    const cartCount = document.querySelector('.cart-count');
-    function updateCartCount() {
-        const customer = JSON.parse(localStorage.getItem('customer') || 'null');
-        if (customer) {
-            // Use server cart
-            fetchCartFromServer();
-        } else {
-            // Use local storage cart
-            let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-            cartCount.textContent = totalItems;
-        }
-    }
-
-    async function fetchCartFromServer() {
-        try {
-            const response = await fetch('/shopai/cart', {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': token,
-                }
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                const totalItems = data.cart_items.reduce((sum, item) => sum + item.quantity, 0);
-                cartCount.textContent = totalItems;
-            }
-        } catch (err) {
-            console.error('Error fetching cart:', err);
-        }
-    }
-
-    // Auth functions
-    const authBtn = document.getElementById('authBtn');
-    const customer = localStorage.getItem('customer');
-    if (customer) {
-        const cust = JSON.parse(customer);
-        authBtn.textContent = `Hi, ${cust.full_name}`;
-    }
-
-    authBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        const customerStr = localStorage.getItem('customer');
-        if (customerStr) {
-            if (confirm('Are you sure you want to log out?')) {
-                localStorage.removeItem('customer');
-                localStorage.removeItem('cart');
-                this.textContent = 'Login / Signup';
-                updateCartCount();
-                showMessage('Logged out successfully!');
-            }
-        } else {
-            document.getElementById('authModal').style.display = 'block';
-        }
+  qs('#loginFormElement').onsubmit = async e => {
+    e.preventDefault();
+    const data = await fetchJSON('/shopai/login', {
+      method: 'POST',
+      body: new FormData(e.target),
+      headers: { 'X-CSRF-TOKEN': token }
     });
 
-    // Auth modal close
-    const authModal = document.getElementById('authModal');
-    document.getElementById('closeAuthModal').addEventListener('click', () => authModal.style.display = 'none');
-    window.addEventListener('click', (e) => {
-        if (e.target === authModal) authModal.style.display = 'none';
-    });
+    if (!data.success) return showMessage(data.error || 'Login failed', 'error');
 
-    // Auth form switch
-    document.getElementById('showRegister').addEventListener('click', (e) => {
-        e.preventDefault();
-        document.getElementById('loginForm').style.display = 'none';
-        document.getElementById('registerForm').style.display = 'block';
-    });
-    document.getElementById('showLogin').addEventListener('click', (e) => {
-        e.preventDefault();
-        document.getElementById('registerForm').style.display = 'none';
-        document.getElementById('loginForm').style.display = 'block';
-    });
-
-    // Login submit
-    document.getElementById('loginFormElement').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        try {
-            const res = await fetch('/shopai/login', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': token,
-                    'Accept': 'application/json',
-                }
-            });
-            const data = await res.json();
-            if (data.success) {
-                localStorage.setItem('customer', JSON.stringify(data.customer));
-                authBtn.textContent = `Hi, ${data.customer.full_name}`;
-                authModal.style.display = 'none';
-                updateCartCount();
-                showMessage(data.message || 'Login successful!');
-                e.target.reset();
-            } else {
-                showMessage(data.error || 'Login failed', 'error');
-            }
-        } catch (err) {
-            showMessage('Network error', 'error');
-        }
-    });
-
-    // Register submit
-    document.getElementById('registerFormElement').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        try {
-            const res = await fetch('/shopai/register', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': token,
-                    'Accept': 'application/json',
-                }
-            });
-            const data = await res.json();
-            if (data.success) {
-                localStorage.setItem('customer', JSON.stringify(data.customer));
-                authBtn.textContent = `Hi, ${data.customer.full_name}`;
-                authModal.style.display = 'none';
-                updateCartCount();
-                showMessage(data.message || 'Registration successful!');
-                e.target.reset();
-            } else {
-                let errMsg = 'Registration failed';
-                if (data.errors) {
-                    errMsg = Object.values(data.errors)[0][0];
-                } else if (data.error) {
-                    errMsg = data.error;
-                }
-                showMessage(errMsg, 'error');
-            }
-        } catch (err) {
-            showMessage('Network error', 'error');
-        }
-    });
-
-    // Product modal
-    const productModal = document.getElementById('productModal');
-    document.getElementById('closeProductModal').addEventListener('click', () => productModal.style.display = 'none');
-    window.addEventListener('click', (e) => {
-        if (e.target === productModal) productModal.style.display = 'none';
-    });
-
-    window.openProductModal = async function(id) {
-        try {
-            const res = await fetch(`/shopai/product/${id}`, {
-                headers: { 'Accept': 'application/json' }
-            });
-            const data = await res.json();
-            if (data.success) {
-                const p = data.product;
-                document.getElementById('modalProductImage').src = p.image_url || '/img/default-product.jpg';
-                document.getElementById('modalProductName').textContent = p.name;
-                document.getElementById('modalProductPrice').textContent = `₱ ${parseFloat(p.price).toLocaleString('en-PH')}`;
-                document.getElementById('modalProductDescription').textContent = p.description || 'No description available.';
-                const qtyEl = document.getElementById('quantity');
-                qtyEl.max = p.quantity;
-                qtyEl.value = 1;
-                productModal.dataset.productId = id;
-                productModal.style.display = 'block';
-            } else {
-                showMessage(data.error || 'Product not found', 'error');
-            }
-        } catch (err) {
-            showMessage('Error loading product', 'error');
-        }
-    };
-
-    // Add to cart - Enhanced for server cart
-    document.getElementById('addToCartBtn').addEventListener('click', async function() {
-        const customer = JSON.parse(localStorage.getItem('customer') || 'null');
-        if (!customer) {
-            showMessage('Please login to add items to cart', 'warning');
-            productModal.style.display = 'none';
-            authModal.style.display = 'block';
-            return;
-        }
-
-        const id = productModal.dataset.productId;
-        const qty = parseInt(document.getElementById('quantity').value);
-        if (!id || qty <= 0) return;
-
-        try {
-            const response = await fetch('/shopai/cart/add', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': token,
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    product_id: id,
-                    quantity: qty
-                })
-            });
-
-            const data = await response.json();
-            
-            if (data.success) {
-                showMessage(`${qty} item(s) added to cart!`, 'success');
-                productModal.style.display = 'none';
-                updateCartCount();
-            } else {
-                showMessage(data.error || 'Failed to add to cart', 'error');
-            }
-        } catch (err) {
-            showMessage('Network error', 'error');
-        }
-    });
-
-    // Buy now - Enhanced
-    document.querySelector('.buy-now-btn').addEventListener('click', async function() {
-        const customer = JSON.parse(localStorage.getItem('customer') || 'null');
-        if (!customer) {
-            showMessage('Please login to purchase', 'warning');
-            productModal.style.display = 'none';
-            authModal.style.display = 'block';
-            return;
-        }
-
-        const id = productModal.dataset.productId;
-        const qty = parseInt(document.getElementById('quantity').value);
-        if (!id || qty <= 0) return;
-
-        try {
-            const response = await fetch('/shopai/cart/add', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': token,
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    product_id: id,
-                    quantity: qty
-                })
-            });
-
-            const data = await response.json();
-            
-            if (data.success) {
-                showMessage('Item added to cart, proceeding to checkout', 'success');
-                productModal.style.display = 'none';
-                updateCartCount();
-                // Open cart modal
-                loadCartItems();
-                document.getElementById('cartModal').style.display = 'block';
-            } else {
-                showMessage(data.error || 'Failed to add to cart', 'error');
-            }
-        } catch (err) {
-            showMessage('Network error', 'error');
-        }
-    });
-
-    // Cart modal
-    const cartModal = document.getElementById('cartModal');
-    const cartBtn = document.getElementById('cartBtn');
-    document.getElementById('closeCartModal').addEventListener('click', () => cartModal.style.display = 'none');
-    window.addEventListener('click', (e) => {
-        if (e.target === cartModal) cartModal.style.display = 'none';
-    });
-    cartBtn.addEventListener('click', function() {
-        loadCartItems();
-        cartModal.style.display = 'block';
-    });
-
-    async function loadCartItems() {
-        const customer = JSON.parse(localStorage.getItem('customer') || 'null');
-        if (!customer) {
-            // Use local storage cart
-            loadLocalCart();
-        } else {
-            // Use server cart
-            loadServerCart();
-        }
-    }
-
-    function loadLocalCart() {
-        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        const cartItemsEl = document.getElementById('cartItems');
-        cartItemsEl.innerHTML = '';
-        let subtotal = 0;
-        cart.forEach((item, index) => {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'cart-item';
-            itemDiv.innerHTML = `
-                <div class="cart-item-image"><img src="${item.image}" alt="${item.name}"></div>
-                <div class="cart-item-details">
-                    <div class="cart-item-name">${item.name}</div>
-                    <div class="cart-item-price">₱ ${item.price.toLocaleString()}</div>
-                    <div class="cart-item-quantity">
-                        Qty: <input type="number" min="1" value="${item.quantity}" onchange="updateLocalCartItem(${index}, this.value)">
-                    </div>
-                </div>
-                <button class="cart-item-remove" onclick="removeLocalCartItem(${index})">&times;</button>
-            `;
-            cartItemsEl.appendChild(itemDiv);
-            subtotal += item.price * item.quantity;
-        });
-        document.getElementById('cartSubtotal').textContent = `₱ ${subtotal.toLocaleString()}`;
-        document.getElementById('cartTotal').textContent = `₱ ${subtotal.toLocaleString()}`;
-    }
-
-    async function loadServerCart() {
-        try {
-            const response = await fetch('/shopai/cart', {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': token,
-                }
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                const cartItemsEl = document.getElementById('cartItems');
-                cartItemsEl.innerHTML = '';
-                let subtotal = 0;
-                
-                data.cart_items.forEach((item, index) => {
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'cart-item';
-                    itemDiv.innerHTML = `
-                        <div class="cart-item-image"><img src="${item.product.image_url || '/img/default-product.jpg'}" alt="${item.product.name}"></div>
-                        <div class="cart-item-details">
-                            <div class="cart-item-name">${item.product.name}</div>
-                            <div class="cart-item-price">₱ ${item.product.price.toLocaleString()}</div>
-                            <div class="cart-item-quantity">
-                                Qty: <input type="number" min="1" max="${item.product.quantity}" value="${item.quantity}" onchange="updateServerCartItem(${item.id}, this.value)">
-                            </div>
-                        </div>
-                        <button class="cart-item-remove" onclick="removeServerCartItem(${item.id})">&times;</button>
-                    `;
-                    cartItemsEl.appendChild(itemDiv);
-                    subtotal += item.product.price * item.quantity;
-                });
-                
-                document.getElementById('cartSubtotal').textContent = `₱ ${subtotal.toLocaleString()}`;
-                document.getElementById('cartTotal').textContent = `₱ ${subtotal.toLocaleString()}`;
-            }
-        } catch (err) {
-            console.error('Error loading server cart:', err);
-        }
-    }
-
-    // Global cart functions
-    window.updateLocalCartItem = function(index, qtyStr) {
-        const qty = parseInt(qtyStr);
-        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        if (qty > 0) {
-            cart[index].quantity = qty;
-        } else {
-            cart.splice(index, 1);
-        }
-        localStorage.setItem('cart', JSON.stringify(cart));
-        loadLocalCart();
-    };
-
-    window.removeLocalCartItem = function(index) {
-        let cart = JSON.parse(localStorage.getItem('cart') || '[]');
-        cart.splice(index, 1);
-        localStorage.setItem('cart', JSON.stringify(cart));
-        loadLocalCart();
-    };
-
-    window.updateServerCartItem = async function(cartId, qtyStr) {
-        const qty = parseInt(qtyStr);
-        if (qty <= 0) return;
-
-        try {
-            const response = await fetch(`/shopai/cart/${cartId}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': token,
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    quantity: qty
-                })
-            });
-
-            const data = await response.json();
-            
-            if (data.success) {
-                showMessage('Cart updated successfully', 'success');
-                loadCartItems();
-            } else {
-                showMessage(data.error || 'Failed to update cart', 'error');
-            }
-        } catch (err) {
-            showMessage('Network error', 'error');
-        }
-    };
-
-    window.removeServerCartItem = async function(cartId) {
-        if (!confirm('Are you sure you want to remove this item?')) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`/shopai/cart/${cartId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': token,
-                }
-            });
-
-            const data = await response.json();
-            
-            if (data.success) {
-                showMessage('Item removed from cart', 'success');
-                loadCartItems();
-            } else {
-                showMessage(data.error || 'Failed to remove item', 'error');
-            }
-        } catch (err) {
-            showMessage('Network error', 'error');
-        }
-    };
-
-    // Checkout modal
-    const checkoutModal = document.getElementById('checkoutModal');
-    const ordersModal = document.getElementById('ordersModal');
-    
-    // Checkout button
-    document.querySelector('.checkout-btn').addEventListener('click', function() {
-        const customer = JSON.parse(localStorage.getItem('customer') || 'null');
-        if (!customer) {
-            showMessage('Please login to checkout', 'warning');
-            cartModal.style.display = 'none';
-            authModal.style.display = 'block';
-            return;
-        }
-        
-        loadCartItems();
-        loadCheckoutSummary();
-        cartModal.style.display = 'none';
-        checkoutModal.style.display = 'block';
-    });
-
-    function loadCheckoutSummary() {
-        const customer = JSON.parse(localStorage.getItem('customer') || 'null');
-        if (!customer) return;
-
-        fetch('/shopai/cart', {
-            headers: {
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': token,
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                let subtotal = 0;
-                data.cart_items.forEach(item => {
-                    subtotal += item.product.price * item.quantity;
-                });
-                
-                document.getElementById('checkoutSubtotal').textContent = `₱ ${subtotal.toLocaleString()}`;
-                document.getElementById('checkoutTotal').textContent = `₱ ${subtotal.toLocaleString()}`;
-            }
-        })
-        .catch(err => {
-            console.error('Error loading checkout summary:', err);
-        });
-    }
-
-    // Checkout form submit
-    document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(e.target);
-        const orderData = {
-            shipping_address: formData.get('shipping_address'),
-            phone: formData.get('phone'),
-            notes: formData.get('notes')
-        };
-
-        try {
-            const response = await fetch('/shopai/checkout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': token,
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify(orderData)
-            });
-
-            const data = await response.json();
-            
-            if (data.success) {
-                showMessage(`Order placed successfully! Order #${data.order_number}`, 'success');
-                checkoutModal.style.display = 'none';
-                e.target.reset();
-                updateCartCount();
-            } else {
-                showMessage(data.error || 'Checkout failed', 'error');
-            }
-        } catch (err) {
-            showMessage('Network error', 'error');
-        }
-    });
-
-    // Close checkout modal
-    document.getElementById('closeCheckoutModal').addEventListener('click', () => checkoutModal.style.display = 'none');
-    document.getElementById('cancelCheckoutBtn').addEventListener('click', () => checkoutModal.style.display = 'none');
-    window.addEventListener('click', (e) => {
-        if (e.target === checkoutModal) checkoutModal.style.display = 'none';
-    });
-
-    // Orders modal
-    document.getElementById('continueShoppingBtn').addEventListener('click', () => cartModal.style.display = 'none');
-
-    // Load orders
-    async function loadOrders() {
-        const customer = JSON.parse(localStorage.getItem('customer') || 'null');
-        if (!customer) return;
-
-        try {
-            const response = await fetch('/shopai/orders', {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': token,
-                }
-            });
-
-            const data = await response.json();
-            
-            if (data.success) {
-                const ordersList = document.getElementById('ordersList');
-                ordersList.innerHTML = '';
-                
-                if (data.orders.length === 0) {
-                    ordersList.innerHTML = '<p class="no-orders">No orders found.</p>';
-                    return;
-                }
-                
-                data.orders.forEach(order => {
-                    const orderDiv = document.createElement('div');
-                    orderDiv.className = 'order-item';
-                    orderDiv.innerHTML = `
-                        <div class="order-header">
-                            <div class="order-info">
-                                <h4>Order #${order.order_number}</h4>
-                                <span class="order-date">${new Date(order.created_at).toLocaleDateString()}</span>
-                                <span class="badge ${order.status_badge.color}">${order.status_badge.text}</span>
-                            </div>
-                            <div class="order-total">
-                                <strong>Total: ₱ ${Number(order.total_amount).toLocaleString()}</strong>
-                            </div>
-                        </div>
-                        <div class="order-items">
-                            ${order.items.map(item => `
-                                <div class="order-item-details">
-                                    <img src="${item.product.image_url || '/img/default-product.jpg'}" alt="${item.product.name}" class="order-item-image">
-                                    <div class="order-item-info">
-                                        <span class="order-item-name">${item.product.name}</span>
-                                        <span class="order-item-quantity">Qty: ${item.quantity}</span>
-                                        <span class="order-item-price">₱ ${Number(item.price).toLocaleString()}</span>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    `;
-                    ordersList.appendChild(orderDiv);
-                });
-            }
-        } catch (err) {
-            console.error('Error loading orders:', err);
-        }
-    }
-
-    // Orders button - Add this to your navigation or header
-    // You can add a button like: <button id="ordersBtn">My Orders</button>
-    if (document.getElementById('ordersBtn')) {
-        document.getElementById('ordersBtn').addEventListener('click', function() {
-            const customer = JSON.parse(localStorage.getItem('customer') || 'null');
-            if (!customer) {
-                showMessage('Please login to view orders', 'warning');
-                authModal.style.display = 'block';
-                return;
-            }
-            loadOrders();
-            ordersModal.style.display = 'block';
-        });
-    }
-
-    // Close orders modal
-    document.getElementById('closeOrdersModal').addEventListener('click', () => ordersModal.style.display = 'none');
-    window.addEventListener('click', (e) => {
-        if (e.target === ordersModal) ordersModal.style.display = 'none';
-    });
-
-    // Init cart count
+    localStorage.setItem('customer', JSON.stringify(data.customer));
+    authBtn.textContent = `Hi, ${data.customer.full_name}`;
+    hideModal(authModal);
     updateCartCount();
+    showMessage(data.message || 'Login successful');
+  };
+
+  qs('#registerFormElement').onsubmit = async e => {
+    e.preventDefault();
+    const data = await fetchJSON('/shopai/register', {
+      method: 'POST',
+      body: new FormData(e.target),
+      headers: { 'X-CSRF-TOKEN': token }
+    });
+
+    if (!data.success) {
+      const msg = data.errors ? Object.values(data.errors)[0][0] : data.error;
+      return showMessage(msg || 'Registration failed', 'error');
+    }
+
+    localStorage.setItem('customer', JSON.stringify(data.customer));
+    authBtn.textContent = `Hi, ${data.customer.full_name}`;
+    hideModal(authModal);
+    updateCartCount();
+    showMessage(data.message || 'Registration successful');
+  };
+
+  /*  PRODUCT MODAL  */
+  qs('#closeProductModal').onclick = () => hideModal(productModal);
+  window.addEventListener('click', e => { if (e.target === productModal) hideModal(productModal); });
+
+  window.openProductModal = async id => {
+    const data = await fetchJSON(`/shopai/product/${id}`);
+    if (!data.success) return showMessage('Product not found', 'error');
+
+    const p = data.product;
+    qs('#modalProductImage').src = p.image_url || '/img/default-product.jpg';
+    qs('#modalProductName').textContent = p.name;
+    qs('#modalProductPrice').textContent = `₱ ${parseFloat(p.price).toLocaleString('en-PH')}`;
+    qs('#modalProductDescription').textContent = p.description || 'No description available.';
+    const qty = qs('#quantity');
+    qty.max = p.quantity;
+    qty.value = 1;
+
+    productModal.dataset.productId = id;
+    showModal(productModal);
+  };
+
+  /*  CART COUNT  */
+  async function updateCartCount() {
+    const customer = JSON.parse(localStorage.getItem('customer') || 'null');
+
+    if (!customer) {
+      const local = JSON.parse(localStorage.getItem('cart') || '[]');
+      cartCount.textContent = local.reduce((s, i) => s + i.quantity, 0);
+      return;
+    }
+
+    const data = await fetchJSON('/shopai/cart', { headers: { 'X-CSRF-TOKEN': token } });
+    if (data.success) {
+      cartCount.textContent = data.cart_items.reduce((s, i) => s + i.quantity, 0);
+    }
+  }
+
+  /*  ADD TO CART  */
+  qs('#addToCartBtn').onclick = () => addToCart(false);
+  qs('.buy-now-btn').onclick = () => addToCart(true);
+
+  async function addToCart(openCheckout) {
+    const customer = JSON.parse(localStorage.getItem('customer') || 'null');
+    if (!customer) {
+      hideModal(productModal);
+      showModal(authModal);
+      return showMessage('Please login', 'warning');
+    }
+
+    const id = productModal.dataset.productId;
+    const qty = parseInt(qs('#quantity').value);
+
+    const data = await fetchJSON('/shopai/cart/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
+      body: JSON.stringify({ product_id: id, quantity: qty })
+    });
+
+    if (!data.success) return showMessage('Failed to add to cart', 'error');
+
+    showMessage('Item added to cart');
+    hideModal(productModal);
+    updateCartCount();
+
+    if (openCheckout) {
+      await loadCartItems();
+      showModal(cartModal);
+    }
+  }
+
+  /*  CART MODAL  */
+  qs('#closeCartModal').onclick = () => hideModal(cartModal);
+  qs('#cartBtn').onclick = () => { loadCartItems(); showModal(cartModal); };
+  window.addEventListener('click', e => { if (e.target === cartModal) hideModal(cartModal); });
+
+  async function loadCartItems() {
+    const customer = JSON.parse(localStorage.getItem('customer') || 'null');
+    if (!customer) return loadLocalCart();
+
+    return loadServerCart();
+  }
+
+  /* ---------- Local Cart ---------- */
+  function loadLocalCart() {
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    renderCart(cart.map((c, i) => ({
+      id: i,
+      name: c.name,
+      image: c.image,
+      price: c.price,
+      quantity: c.quantity,
+      stock: 9999,
+      isLocal: true
+    })));
+  }
+
+  window.updateLocalCartItem = (i, qty) => {
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    qty = parseInt(qty);
+    if (qty <= 0) cart.splice(i, 1); else cart[i].quantity = qty;
+    localStorage.setItem('cart', JSON.stringify(cart));
+    loadLocalCart();
+  };
+
+  window.removeLocalCartItem = i => {
+    let cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    cart.splice(i, 1);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    loadLocalCart();
+  };
+
+  /* ---------- Server Cart ---------- */
+  async function loadServerCart() {
+    const data = await fetchJSON('/shopai/cart', { headers: { 'X-CSRF-TOKEN': token } });
+    if (!data.success) return;
+
+    const mapped = data.cart_items.map(item => ({
+      id: item.id,
+      name: item.product.name,
+      image: item.product.image_url,
+      price: item.product.price,
+      quantity: item.quantity,
+      stock: item.product.quantity,
+      isLocal: false
+    }));
+
+    renderCart(mapped);
+  }
+
+  window.updateServerCartItem = async (id, qty) => {
+    qty = parseInt(qty);
+    if (qty <= 0) return;
+
+    const data = await fetchJSON(`/shopai/cart/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
+      body: JSON.stringify({ quantity: qty })
+    });
+
+    if (!data.success) return showMessage('Failed to update cart', 'error');
+    showMessage('Cart updated');
+    loadCartItems();
+  };
+
+  window.removeServerCartItem = async id => {
+    if (!confirm('Remove this item?')) return;
+
+    const data = await fetchJSON(`/shopai/cart/${id}`, {
+      method: 'DELETE',
+      headers: { 'X-CSRF-TOKEN': token }
+    });
+
+    if (!data.success) return showMessage('Failed to remove', 'error');
+    showMessage('Item removed');
+    loadCartItems();
+  };
+
+  /* ---------- Render Cart ---------- */
+  function renderCart(items) {
+    const el = qs('#cartItems');
+    el.innerHTML = '';
+    let subtotal = 0;
+
+    items.forEach((item, index) => {
+      subtotal += item.price * item.quantity;
+
+      el.innerHTML += `
+        <div class="cart-item">
+          <div class="cart-item-image"><img src="${item.image || '/img/default-product.jpg'}"></div>
+          <div class="cart-item-details">
+            <div class="cart-item-name">${item.name}</div>
+            <div class="cart-item-price">₱ ${item.price.toLocaleString()}</div>
+            <div class="cart-item-quantity">
+              Qty: <input type="number" min="1" max="${item.stock}"
+                value="${item.quantity}"
+                onchange="${item.isLocal ?
+                  `updateLocalCartItem(${index}, this.value)` :
+                  `updateServerCartItem(${item.id}, this.value)`}">
+            </div>
+          </div>
+          <button class="cart-item-remove"
+            onclick="${item.isLocal ?
+              `removeLocalCartItem(${index})` :
+              `removeServerCartItem(${item.id})`}">&times;</button>
+        </div>
+      `;
+    });
+
+    qs('#cartSubtotal').textContent = `₱ ${subtotal.toLocaleString()}`;
+    qs('#cartTotal').textContent = `₱ ${subtotal.toLocaleString()}`;
+  }
+
+  /*  CHECKOUT  */
+  qs('.checkout-btn').onclick = () => {
+    const customer = JSON.parse(localStorage.getItem('customer') || 'null');
+    if (!customer) {
+      hideModal(cartModal);
+      showModal(authModal);
+      return showMessage('Please login');
+    }
+
+    loadCartItems();
+    updateCheckoutSummary();
+    hideModal(cartModal);
+    showModal(checkoutModal);
+  };
+
+  async function updateCheckoutSummary() {
+    const data = await fetchJSON('/shopai/cart', { headers: { 'X-CSRF-TOKEN': token } });
+    if (!data.success) return;
+
+    let subtotal = data.cart_items.reduce((s, i) => s + i.product.price * i.quantity, 0);
+    qs('#checkoutSubtotal').textContent = `₱ ${subtotal.toLocaleString()}`;
+    qs('#checkoutTotal').textContent = `₱ ${subtotal.toLocaleString()}`;
+  }
+
+  qs('#checkoutForm').onsubmit = async e => {
+    e.preventDefault();
+
+    const fd = new FormData(e.target);
+    const body = {
+      shipping_address: fd.get('shipping_address'),
+      phone: fd.get('phone'),
+      notes: fd.get('notes')
+    };
+
+    const data = await fetchJSON('/shopai/checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
+      body: JSON.stringify(body)
+    });
+
+    if (!data.success) return showMessage('Checkout failed', 'error');
+
+    showMessage('Order placed successfully');
+    hideModal(checkoutModal);
+    updateCartCount();
+  };
+
 });

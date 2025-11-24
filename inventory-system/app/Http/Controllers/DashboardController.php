@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -15,6 +16,12 @@ class DashboardController extends Controller
     {
         // Paginate products for the table
         $items = Product::orderBy('created_at', 'desc')->paginate(20);
+
+        // Get orders sorted by price (expensive first)
+        $orders = Order::with('customer', 'items.product')
+            ->orderBy('total_amount', 'desc')
+            ->limit(10)
+            ->get();
 
         // Compute summary values based on products/quantity
         $totalItems = Product::count();
@@ -33,6 +40,6 @@ class DashboardController extends Controller
             'total_value' => $totalValue,
         ];
 
-        return view('dashboard', compact('items', 'summary'));
+        return view('dashboard', compact('items', 'summary', 'orders'));
     }
 }

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -21,9 +23,10 @@ class OrderController extends Controller
             $q = $request->get('q');
             $query->where(function($qB) use ($q) {
                 $qB->where('id', 'like', "%{$q}%")
-                   ->orWhere('customer_name', 'like', "%{$q}%")
-                   ->orWhereHas('product', function($subQuery) use ($q) {
-                       $subQuery->where('name', 'like', "%{$q}%");
+                   ->orWhere('order_number', 'like', "%{$q}%")
+                   ->orWhereHas('customer', function($subQuery) use ($q) {
+                       $subQuery->where('full_name', 'like', "%{$q}%")
+                                ->orWhere('email', 'like', "%{$q}%");
                    });
             });
         }
@@ -34,10 +37,11 @@ class OrderController extends Controller
             $query->where('status', $status);
         }
 
-        $orders = $query->with('product')->orderBy('created_at', 'desc')->paginate(25)->withQueryString();
+        $orders = $query->with('customer', 'items.product')->orderBy('created_at', 'desc')->paginate(25)->withQueryString();
+        $customers = Customer::all();
         $products = Product::all();
 
-        return view('orders', compact('orders', 'products'));
+        return view('orders', compact('orders', 'customers', 'products'));
     }
 
     /**
@@ -46,7 +50,7 @@ class OrderController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'customer_name' => 'required|string|max:255',
+            'customer_id' => 'required|integer|exists:customers,id',
             'product_id' => 'required|integer|exists:products,id',
             'quantity' => 'required|integer|min:1',
             'unit_price' => 'required|numeric|min:0',
@@ -79,8 +83,20 @@ class OrderController extends Controller
                 ->withInput();
         }
 
+        // Generate order number
+        $data['order_number'] = Order::generateOrderNumber();
+        $data['total_amount'] = $data['total_price'];
+
         // Create the order
         $order = Order::create($data);
+
+        // Create order item
+        OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $data['product_id'],
+            'quantity' => $data['quantity'],
+            'price' => $data['unit_price'],
+        ]);
 
         // Reduce the product quantity
         $product->quantity -= $data['quantity'];
@@ -95,7 +111,7 @@ class OrderController extends Controller
     public function update(Request $request, Order $order)
     {
         $validator = Validator::make($request->all(), [
-            'customer_name' => 'required|string|max:255',
+            'customer_id' => 'required|integer|exists:customers,id',
             'product_id' => 'required|integer|exists:products,id',
             'quantity' => 'required|integer|min:1',
             'unit_price' => 'required|numeric|min:0',
@@ -121,10 +137,18 @@ class OrderController extends Controller
                 ->withInput();
         }
 
+        // Get the order item
+        $orderItem = $order->items->first();
+        if (!$orderItem) {
+            return redirect()->back()
+                ->withErrors(['order_item' => 'Order item not found'])
+                ->withInput();
+        }
+
         // Handle stock adjustment
-        $oldQuantity = $order->quantity;
+        $oldQuantity = $orderItem->quantity;
         $newQuantity = $data['quantity'];
-        $oldProductId = $order->product_id;
+        $oldProductId = $orderItem->product_id;
         $newProductId = $data['product_id'];
 
         // If product changed, restore old product stock and check new product stock
@@ -160,7 +184,15 @@ class OrderController extends Controller
         }
 
         // Update the order
+        $data['total_amount'] = $data['total_price'];
         $order->update($data);
+
+        // Update the order item
+        $orderItem->update([
+            'product_id' => $data['product_id'],
+            'quantity' => $data['quantity'],
+            'price' => $data['unit_price'],
+        ]);
 
         return redirect()->route('orders.index')->with('success', 'Order updated successfully.');
     }
@@ -171,12 +203,18 @@ class OrderController extends Controller
     public function destroy(Order $order)
     {
         // Restore stock before deleting
-        $product = $order->product;
-        if ($product) {
-            $product->quantity += $order->quantity;
-            $product->save();
+        foreach ($order->items as $item) {
+            $product = $item->product;
+            if ($product) {
+                $product->quantity += $item->quantity;
+                $product->save();
+            }
         }
 
+        // Delete order items first
+        $order->items()->delete();
+        
+        // Then delete the order
         $order->delete();
 
         return redirect()->route('orders.index')->with('success', 'Order deleted successfully.');
@@ -193,22 +231,26 @@ class OrderController extends Controller
 
         $oldStatus = $order->status;
         $newStatus = $request->status;
-        $product = $order->product;
 
         // Handle stock adjustments based on status changes
-        if ($product && in_array($oldStatus, ['approved', 'delivered']) && $newStatus === 'declined') {
-            // Return stock when order is declined
-            $product->quantity += $order->quantity;
-            $product->save();
-        } elseif ($product && in_array($oldStatus, ['pending', 'declined']) && $newStatus === 'approved') {
-            // Deduct stock when order is approved
-            if ($product->quantity < $order->quantity) {
-                return redirect()->back()->with('error', 'Insufficient stock to approve this order.');
+        foreach ($order->items as $item) {
+            $product = $item->product;
+            if (!$product) continue;
+
+            if ($product && in_array($oldStatus, ['approved', 'delivered']) && $newStatus === 'declined') {
+                // Return stock when order is declined
+                $product->quantity += $item->quantity;
+                $product->save();
+            } elseif ($product && in_array($oldStatus, ['pending', 'declined']) && $newStatus === 'approved') {
+                // Deduct stock when order is approved
+                if ($product->quantity < $item->quantity) {
+                    return redirect()->back()->with('error', 'Insufficient stock to approve this order.');
+                }
+                $product->quantity -= $item->quantity;
+                $product->save();
             }
-            $product->quantity -= $order->quantity;
-            $product->save();
+            // Note: delivered status doesn't change stock (already deducted on approval)
         }
-        // Note: delivered status doesn't change stock (already deducted on approval)
 
         $order->status = $newStatus;
         $order->save();

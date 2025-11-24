@@ -21,7 +21,7 @@
         <option value="delivered">Delivered</option>
       </select>
       <label class="filter-label" for="searchInput">Search:</label>
-      <input id="searchInput" class="search-input" type="text" placeholder="Order ID, Customer, Product">
+      <input id="searchInput" class="search-input" type="text" placeholder="Order #, Customer, Product">
       <button class="add-btn" id="openAddOrderModalBtn">Add Order</button>
     </div>
   </div>
@@ -30,11 +30,10 @@
     <table>
       <thead>
         <tr>
-          <th>Order ID</th>
+          <th>Order #</th>
           <th>Customer</th>
-          <th>Product</th>
-          <th>Quantity</th>
-          <th>Total Price</th>
+          <th>Products</th>
+          <th>Total Amount</th>
           <th>Status</th>
           <th>Date</th>
           <th>Action</th>
@@ -43,47 +42,54 @@
       <tbody>
         @foreach($orders as $order)
         @php
-          $statusClass = '';
-          switch($order->status) {
-            case 'pending':
-              $statusClass = 'status-pending';
-              break;
-            case 'approved':
-              $statusClass = 'status-approved';
-              break;
-            case 'declined':
-              $statusClass = 'status-declined';
-              break;
-            case 'delivered':
-              $statusClass = 'status-delivered';
-              break;
-          }
+          $statusClass = match($order->status) {
+            'pending' => 'status-pending',
+            'approved' => 'status-approved',
+            'declined' => 'status-declined',
+            'delivered' => 'status-delivered',
+            default => 'status-pending'
+          };
         @endphp
         <tr>
-          <td class="order-id-cell">{{ $order->id }}</td>
-          <td class="customer-cell">{{ $order->customer_name }}</td>
-          <td class="product-cell">{{ $order->product ? $order->product->name : 'N/A' }}</td>
-          <td>{{ $order->quantity }}</td>
-          <td>₱{{ number_format($order->total_price, 2) }}</td>
+          <td class="order-id-cell">{{ $order->order_number }}</td>
+          <td class="customer-cell">{{ $order->customer ? $order->customer->full_name : 'N/A' }}</td>
+          <td class="products-cell">
+            @foreach($order->items as $item)
+              <div class="product-item">
+                {{ $item->product->name }} ({{ $item->quantity }})
+              </div>
+            @endforeach
+          </td>
+          <td class="amount-cell">₱{{ number_format($order->total_amount, 2) }}</td>
           <td class="status-cell {{ $statusClass }}">{{ ucfirst($order->status) }}</td>
-          <td>{{ $order->created_at->format('M d, Y') }}</td>
-          <td>
+          <td class="date-cell">{{ $order->created_at->format('M d, Y') }}</td>
+          <td class="action-cell">
             <button type="button" class="view-btn"
               data-id="{{ $order->id }}"
-              data-customer="{{ $order->customer_name }}"
-              data-product-id="{{ $order->product_id }}"
-              data-product-name="{{ $order->product ? $order->product->name : 'N/A' }}"
-              data-quantity="{{ $order->quantity }}"
-              data-price="{{ $order->product ? $order->product->price : 0 }}"
-              data-total="{{ $order->total_price }}"
+              data-order-number="{{ $order->order_number }}"
+              data-customer-id="{{ $order->customer_id }}"
+              data-customer="{{ $order->customer ? $order->customer->full_name : 'N/A' }}"
+              data-customer-email="{{ $order->customer ? $order->customer->email : 'N/A' }}"
+              data-total="{{ $order->total_amount }}"
               data-status="{{ $order->status }}"
               data-notes="{{ $order->notes }}"
+              data-items="{{ json_encode($order->items->map(function($item) {
+                return [
+                  'product_id' => $item->product_id,
+                  'product_name' => $item->product->name,
+                  'quantity' => $item->quantity,
+                  'price' => $item->price,
+                  'subtotal' => $item->quantity * $item->price
+                ];
+              })) }}"
               data-created="{{ $order->created_at->format('M d, Y - h:i A') }}">View</button>
             <button type="button" class="edit-btn"
               data-id="{{ $order->id }}"
-              data-customer="{{ $order->customer_name }}"
-              data-product-id="{{ $order->product_id }}"
-              data-quantity="{{ $order->quantity }}"
+              data-order-number="{{ $order->order_number }}"
+              data-customer-id="{{ $order->customer_id }}"
+              data-product-id="{{ $order->items->first() ? $order->items->first()->product_id : '' }}"
+              data-quantity="{{ $order->items->first() ? $order->items->first()->quantity : 1 }}"
+              data-price="{{ $order->items->first() ? $order->items->first()->price : 0 }}"
               data-status="{{ $order->status }}"
               data-notes="{{ $order->notes }}">Edit</button>
           </td>
@@ -108,22 +114,29 @@
       <form id="addOrderForm" method="POST" action="{{ route('orders.store') }}">
         @csrf
 
-        <div class="form-group">
-          <label class="modal-label">Customer Name</label>
-          <input type="text" name="customer_name" id="addCustomerName" placeholder="Customer name" required>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="modal-label">Customer</label>
+            <select name="customer_id" id="addCustomerId" required>
+              <option value="">-- Select Customer --</option>
+              @foreach($customers as $customer)
+                <option value="{{ $customer->id }}">{{ $customer->full_name }} ({{ $customer->email }})</option>
+              @endforeach
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="modal-label">Product</label>
+            <select name="product_id" id="addProductId" required>
+              <option value="">-- Select Product --</option>
+              @foreach($products as $product)
+                <option value="{{ $product->id }}" data-price="{{ $product->price }}">{{ $product->name }} (₱{{ number_format($product->price, 2) }})</option>
+              @endforeach
+            </select>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label class="modal-label">Product</label>
-          <select name="product_id" id="addProductId" required>
-            <option value="">-- Select Product --</option>
-            @foreach($products as $product)
-              <option value="{{ $product->id }}" data-price="{{ $product->price }}">{{ $product->name }} (₱{{ number_format($product->price, 2) }})</option>
-            @endforeach
-          </select>
-        </div>
-
-        <div class="form-row" style="display:flex; gap:15px;">
+        <div class="form-row">
           <div class="form-group">
             <label class="modal-label">Quantity</label>
             <input type="number" name="quantity" id="addQuantity" min="1" value="1" required>
@@ -167,27 +180,23 @@
       <h3>Order Details</h3>
       <div class="order-details">
         <div class="detail-row">
-          <span class="detail-label">Order ID:</span>
-          <span id="viewOrderId"></span>
+          <span class="detail-label">Order #:</span>
+          <span id="viewOrderNumber"></span>
         </div>
         <div class="detail-row">
           <span class="detail-label">Customer:</span>
           <span id="viewCustomer"></span>
         </div>
         <div class="detail-row">
-          <span class="detail-label">Product:</span>
-          <span id="viewProduct"></span>
+          <span class="detail-label">Customer Email:</span>
+          <span id="viewCustomerEmail"></span>
+        </div>
+        <div class="detail-row full-width">
+          <span class="detail-label">Products:</span>
+          <div id="viewProducts" class="products-list"></div>
         </div>
         <div class="detail-row">
-          <span class="detail-label">Quantity:</span>
-          <span id="viewQuantity"></span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Unit Price:</span>
-          <span id="viewUnitPrice"></span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Total Price:</span>
+          <span class="detail-label">Total Amount:</span>
           <span id="viewTotal"></span>
         </div>
         <div class="detail-row">
@@ -216,22 +225,29 @@
         @csrf
         @method('PUT')
 
-        <div class="form-group">
-          <label class="modal-label">Customer Name</label>
-          <input type="text" name="customer_name" id="editCustomerName" placeholder="Customer name" required>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="modal-label">Customer</label>
+            <select name="customer_id" id="editCustomerId" required>
+              <option value="">-- Select Customer --</option>
+              @foreach($customers as $customer)
+                <option value="{{ $customer->id }}">{{ $customer->full_name }} ({{ $customer->email }})</option>
+              @endforeach
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="modal-label">Product</label>
+            <select name="product_id" id="editProductId" required>
+              <option value="">-- Select Product --</option>
+              @foreach($products as $product)
+                <option value="{{ $product->id }}" data-price="{{ $product->price }}">{{ $product->name }} (₱{{ number_format($product->price, 2) }})</option>
+              @endforeach
+            </select>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label class="modal-label">Product</label>
-          <select name="product_id" id="editProductId" required>
-            <option value="">-- Select Product --</option>
-            @foreach($products as $product)
-              <option value="{{ $product->id }}" data-price="{{ $product->price }}">{{ $product->name }} (₱{{ number_format($product->price, 2) }})</option>
-            @endforeach
-          </select>
-        </div>
-
-        <div class="form-row" style="display:flex; gap:15px;">
+        <div class="form-row">
           <div class="form-group">
             <label class="modal-label">Quantity</label>
             <input type="number" name="quantity" id="editQuantity" min="1" required>
@@ -276,12 +292,12 @@
     <div class="modal-content">
       <span class="close-btn" id="closeDeleteOrderBtn">×</span>
       <h3>Confirm Delete</h3>
-      <p>Are you sure you want to delete this order? This action cannot be undone.</p>
+      <p>Are you sure you want to delete this order? This action cannot be undone and will restore the product quantities to inventory.</p>
       <form id="deleteOrderForm" method="POST">
         @csrf
         @method('DELETE')
         <div class="delete-actions">
-          <button type="submit" class="delete-confirm-btn">Delete</button>
+          <button type="submit" class="delete-confirm-btn">Delete Order</button>
           <button type="button" class="cancel-confirm-btn" id="cancelDeleteOrderBtn">Cancel</button>
         </div>
       </form>

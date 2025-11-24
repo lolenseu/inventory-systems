@@ -33,6 +33,9 @@
 
   <section class="table-area">
     <div class="dashboard-container">
+      <div class="table-header">
+        <h3>Top Products</h3>
+      </div>
       <div class="table-wrapper">
         <table>
           <thead>
@@ -81,26 +84,56 @@
 
   <section class="table-area" style="margin-top: 30px;">
     <div class="dashboard-container">
+      <div class="table-header">
+        <h3>Top Orders</h3>
+      </div>
       <div class="table-wrapper">
         <table>
           <thead>
             <tr>
-              <th>SKU</th>
-              <th>Product</th>
-              <th>Quantity</th>
-              <th>Unit Price</th>
+              <th>Order #</th>
+              <th>Customer</th>
+              <th>Products</th>
+              <th>Total Amount</th>
               <th>Status</th>
+              <th>Date</th>
             </tr>
           </thead>
           <tbody>
-            <!-- Buy order content will be added here -->
+            @forelse($orders as $order)
+            @php
+              $statusClass = match($order->status) {
+                'pending' => 'status-warning',
+                'approved' => 'status-success',
+                'declined' => 'status-danger',
+                'delivered' => 'status-info',
+                default => 'status-secondary'
+              };
+            @endphp
+            <tr>
+              <td class="order-id-cell">{{ $order->order_number }}</td>
+              <td class="customer-cell">{{ $order->customer->full_name ?? 'N/A' }}</td>
+              <td class="products-cell">
+                @foreach($order->items as $item)
+                  <div>{{ $item->product->name }} ({{ $item->quantity }})</div>
+                @endforeach
+              </td>
+              <td class="amount-cell">₱{{ number_format($order->total_amount, 2) }}</td>
+              <td class="status-cell {{ $statusClass }}">{{ ucfirst($order->status) }}</td>
+              <td class="date-cell">{{ $order->created_at->format('M d, Y H:i') }}</td>
+            </tr>
+            @empty
+            <tr>
+              <td colspan="6" class="text-center">No orders found</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
 
-      @if($items->isEmpty())
+      @if($orders->isEmpty())
       <div class="no-dashboard">
-        <p>No Orders found</p>
+        <p>No orders found</p>
       </div>
       @endif
 

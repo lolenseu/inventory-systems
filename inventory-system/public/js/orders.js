@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', function(){
     getRows().forEach(row => {
       const orderIdCell = row.querySelector('.order-id-cell');
       const customerCell = row.querySelector('.customer-cell');
-      const productCell = row.querySelector('.product-cell');
+      const productCell = row.querySelector('.products-cell');
       const statusCell = row.querySelector('.status-cell');
       
       if (!orderIdCell || !customerCell || !productCell || !statusCell) return;
@@ -47,16 +47,14 @@ document.addEventListener('DOMContentLoaded', function(){
       const orderId = row.querySelector('td:nth-child(1)')?.textContent.trim() || '';
       const customer = row.querySelector('td:nth-child(2)')?.textContent.trim() || '';
       const product = row.querySelector('td:nth-child(3)')?.textContent.trim() || '';
-      const qty = row.querySelector('td:nth-child(4)')?.textContent.trim() || '';
-      const price = row.querySelector('td:nth-child(5)')?.textContent.trim() || '';
-      const status = row.querySelector('td:nth-child(6)')?.textContent.trim() || '';
-      const date = row.querySelector('td:nth-child(7)')?.textContent.trim() || '';
+      const price = row.querySelector('td:nth-child(4)')?.textContent.trim() || '';
+      const status = row.querySelector('td:nth-child(5)')?.textContent.trim() || '';
+      const date = row.querySelector('td:nth-child(6)')?.textContent.trim() || '';
 
       rowsHtml += `<tr>
         <td style="padding:8px;border:1px solid #ccc;text-align:center">${orderId}</td>
         <td style="padding:8px;border:1px solid #ccc;text-align:left">${customer}</td>
         <td style="padding:8px;border:1px solid #ccc;text-align:left">${product}</td>
-        <td style="padding:8px;border:1px solid #ccc;text-align:center">${qty}</td>
         <td style="padding:8px;border:1px solid #ccc;text-align:right">${price}</td>
         <td style="padding:8px;border:1px solid #ccc;text-align:center">${status}</td>
         <td style="padding:8px;border:1px solid #ccc;text-align:center">${date}</td>
@@ -80,17 +78,16 @@ document.addEventListener('DOMContentLoaded', function(){
           <table>
             <thead>
               <tr>
-                <th>Order ID</th>
+                <th>Order #</th>
                 <th>Customer</th>
-                <th>Product</th>
-                <th>Quantity</th>
-                <th>Total Price</th>
+                <th>Products</th>
+                <th>Total Amount</th>
                 <th>Status</th>
                 <th>Date</th>
               </tr>
             </thead>
             <tbody>
-              ${rowsHtml || '<tr><td colspan="7" style="padding:8px;border:1px solid #ccc;text-align:center">No records found</td></tr>'}
+              ${rowsHtml || '<tr><td colspan="6" style="padding:8px;border:1px solid #ccc;text-align:center">No records found</td></tr>'}
             </tbody>
           </table>
         </body>
@@ -170,25 +167,39 @@ document.addEventListener('DOMContentLoaded', function(){
   // View Order Handler
   document.querySelectorAll('.view-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const viewOrderId = document.getElementById('viewOrderId');
+      const viewOrderNumber = document.getElementById('viewOrderNumber');
       const viewCustomer = document.getElementById('viewCustomer');
-      const viewProduct = document.getElementById('viewProduct');
-      const viewQuantity = document.getElementById('viewQuantity');
-      const viewUnitPrice = document.getElementById('viewUnitPrice');
+      const viewCustomerEmail = document.getElementById('viewCustomerEmail');
+      const viewProducts = document.getElementById('viewProducts');
       const viewTotal = document.getElementById('viewTotal');
       const viewStatus = document.getElementById('viewStatus');
       const viewDate = document.getElementById('viewDate');
       const viewNotes = document.getElementById('viewNotes');
 
-      if (viewOrderId) viewOrderId.textContent = btn.getAttribute('data-id') || '';
+      if (viewOrderNumber) viewOrderNumber.textContent = btn.getAttribute('data-order-number') || '';
       if (viewCustomer) viewCustomer.textContent = btn.getAttribute('data-customer') || '';
-      if (viewProduct) viewProduct.textContent = btn.getAttribute('data-product-name') || '';
-      if (viewQuantity) viewQuantity.textContent = btn.getAttribute('data-quantity') || '';
-      if (viewUnitPrice) viewUnitPrice.textContent = '₱' + (parseFloat(btn.getAttribute('data-price')) || 0).toFixed(2);
+      if (viewCustomerEmail) viewCustomerEmail.textContent = btn.getAttribute('data-customer-email') || '';
       if (viewTotal) viewTotal.textContent = '₱' + (parseFloat(btn.getAttribute('data-total')) || 0).toFixed(2);
       if (viewStatus) viewStatus.textContent = btn.getAttribute('data-status') || '';
       if (viewDate) viewDate.textContent = btn.getAttribute('data-created') || '';
       if (viewNotes) viewNotes.textContent = btn.getAttribute('data-notes') || 'No notes';
+
+      // Display products with quantities
+      if (viewProducts) {
+        const items = JSON.parse(btn.getAttribute('data-items') || '[]');
+        viewProducts.innerHTML = '';
+        items.forEach(item => {
+          const productDiv = document.createElement('div');
+          productDiv.className = 'product-detail-item';
+          productDiv.innerHTML = `
+            <span class="product-name">${item.product_name}</span>
+            <span class="product-quantity">× ${item.quantity}</span>
+            <span class="product-price">₱${item.price.toFixed(2)}</span>
+            <span class="product-subtotal">= ₱${item.subtotal.toFixed(2)}</span>
+          `;
+          viewProducts.appendChild(productDiv);
+        });
+      }
 
       viewOrderModal.style.display = 'block';
     });
@@ -207,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function(){
       const id = btn.getAttribute('data-id');
       if (editOrderForm) editOrderForm.action = `/orders/${id}`;
 
-      const editCustomerName = document.getElementById('editCustomerName');
+      const editCustomerId = document.getElementById('editCustomerId');
       const editProductId = document.getElementById('editProductId');
       const editQuantity = document.getElementById('editQuantity');
       const editUnitPrice = document.getElementById('editUnitPrice');
@@ -215,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function(){
       const editStatus = document.getElementById('editStatus');
       const editNotes = document.getElementById('editNotes');
 
-      if (editCustomerName) editCustomerName.value = btn.getAttribute('data-customer') || '';
+      if (editCustomerId) editCustomerId.value = btn.getAttribute('data-customer-id') || '';
       if (editProductId) editProductId.value = btn.getAttribute('data-product-id') || '';
       if (editQuantity) editQuantity.value = btn.getAttribute('data-quantity') || 1;
       if (editStatus) editStatus.value = btn.getAttribute('data-status') || 'pending';
@@ -273,6 +284,7 @@ document.addEventListener('DOMContentLoaded', function(){
       deleteOrderBtn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
         if (deleteOrderForm) deleteOrderForm.action = `/orders/${id}`;
+        deleteOrderModal.style.display = 'none';
         deleteOrderModal.style.display = 'block';
       });
     }

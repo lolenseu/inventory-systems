@@ -310,7 +310,8 @@
   
   <!-- Success/Error Messages -->
   <div id="message-container" class="message-container"></div>
-  
+
+  <script src="{{ asset('js/shopai_utility.js') }}"></script>
   <script src="{{ asset('js/shopai.js') }}"></script>
 </body>
 </html>

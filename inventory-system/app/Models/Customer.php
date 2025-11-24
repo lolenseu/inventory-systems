@@ -3,13 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class Customer extends Authenticatable
 {
-    use HasFactory, Notifiable, SoftDeletes;
+    use HasFactory, Notifiable;
 
     protected $table = 'customers';
 
@@ -29,6 +28,7 @@ class Customer extends Authenticatable
         'date_of_birth',
         'gender',
         'verification_token',
+        'is_active',
     ];
 
     /**
