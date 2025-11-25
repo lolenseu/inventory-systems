@@ -8,7 +8,7 @@
   <div class="products-header">
     <div class="header-left">
       <h2>Products</h2>
-      <a id="printCv" class="print-cv-link">Print CV</a>
+      <a id="printCv" class="print-cv-link">Print Product</a>
     </div>
     <div class="header-actions">
       <label class="filter-label">Filter:</label>

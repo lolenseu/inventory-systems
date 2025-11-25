@@ -216,10 +216,6 @@
   position: relative;
 }
 
-.dashboard-container h3 {
-  text-align: center;
-}
-
 .dashboard-container table {
   width: 100%;
   border-collapse: collapse;
@@ -308,7 +304,7 @@
   margin-bottom: 0;
 }
 
-.Table-wrapper {
+.table-wrapper {
   max-height: 300px;
   overflow-y: auto;
   overflow-x: auto;
@@ -317,29 +313,29 @@
   position: relative;
 }
 
-.Table-wrapper {
+.table-wrapper {
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 120, 215, 0.7) transparent;
 }
 
-.Table-wrapper::-webkit-scrollbar {
+.table-wrapper::-webkit-scrollbar {
   width: 16px;
   height: 16px;
 }
 
-.Table-wrapper::-webkit-scrollbar-track {
+.table-wrapper::-webkit-scrollbar-track {
   background: transparent;
   border-radius: 8px;
 }
 
-.Table-wrapper::-webkit-scrollbar-thumb {
+.table-wrapper::-webkit-scrollbar-thumb {
   background: rgba(0, 120, 215, 0.7);
   border-radius: 8px;
   border: 3px solid transparent;
   background-clip: padding-box;
 }
 
-.Table-wrapper::-webkit-scrollbar-thumb:hover {
+.table-wrapper::-webkit-scrollbar-thumb:hover {
   background: rgba(0, 120, 215, 0.9);
 }
 

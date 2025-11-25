@@ -186,22 +186,35 @@ document.addEventListener('DOMContentLoaded', function(){
 
       // Display products with quantities
       if (viewProducts) {
-        const items = JSON.parse(btn.getAttribute('data-items') || '[]');
-        viewProducts.innerHTML = '';
-        items.forEach(item => {
-          const productDiv = document.createElement('div');
-          productDiv.className = 'product-detail-item';
-          productDiv.innerHTML = `
-            <span class="product-name">${item.product_name}</span>
-            <span class="product-quantity">× ${item.quantity}</span>
-            <span class="product-price">₱${item.price.toFixed(2)}</span>
-            <span class="product-subtotal">= ₱${item.subtotal.toFixed(2)}</span>
-          `;
-          viewProducts.appendChild(productDiv);
-        });
+        const itemsData = btn.getAttribute('data-items');
+        if (!itemsData) {
+          viewProducts.innerHTML = '<div class="no-products">No products found</div>';
+          return;
+        }
+        
+        try {
+          const items = JSON.parse(itemsData);
+          viewProducts.innerHTML = '';
+          items.forEach(item => {
+            const productDiv = document.createElement('div');
+            productDiv.className = 'product-detail-item';
+            productDiv.innerHTML = `
+              <span class="product-name">${item.product_name || 'N/A'}</span>
+              <span class="product-quantity">× ${item.quantity}</span>
+              <span class="product-price">₱${(item.price || 0).toFixed(2)}</span>
+              <span class="product-subtotal">= ₱${(item.subtotal || 0).toFixed(2)}</span>
+            `;
+            viewProducts.appendChild(productDiv);
+          });
+        } catch (e) {
+          console.error('Error parsing items data:', e);
+          viewProducts.innerHTML = '<div class="no-products">Error loading products</div>';
+        }
       }
 
-      viewOrderModal.style.display = 'block';
+      // Show the modal
+      const viewOrderModal = document.getElementById('viewOrderModal');
+      if (viewOrderModal) viewOrderModal.style.display = 'block';
     });
   });
 
@@ -271,34 +284,6 @@ document.addEventListener('DOMContentLoaded', function(){
   if (closeEditOrderBtn) {
     closeEditOrderBtn.addEventListener('click', () => {
       editOrderModal.style.display = 'none';
-    });
-  }
-
-  // Delete Order Handler
-  const deleteOrderBtn = document.getElementById('deleteOrderBtn');
-  const deleteOrderForm = document.getElementById('deleteOrderForm');
-
-  document.querySelectorAll('.edit-btn').forEach(btn => {
-    // Add delete functionality to edit button's modal
-    if (deleteOrderBtn) {
-      deleteOrderBtn.addEventListener('click', () => {
-        const id = btn.getAttribute('data-id');
-        if (deleteOrderForm) deleteOrderForm.action = `/orders/${id}`;
-        deleteOrderModal.style.display = 'none';
-        deleteOrderModal.style.display = 'block';
-      });
-    }
-  });
-
-  if (closeDeleteOrderBtn) {
-    closeDeleteOrderBtn.addEventListener('click', () => {
-      deleteOrderModal.style.display = 'none';
-    });
-  }
-
-  if (cancelDeleteOrderBtn) {
-    cancelDeleteOrderBtn.addEventListener('click', () => {
-      deleteOrderModal.style.display = 'none';
     });
   }
 

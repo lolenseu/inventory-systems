@@ -18,8 +18,6 @@ return new class extends Migration
             $table->string('phone', 20)->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
-            
-            // Indexes for reports performance
             $table->index(['status']);
             $table->index(['created_at']);
             $table->index(['customer_id']);

@@ -279,6 +279,41 @@
   margin: 2px 0;
 }
 
+.table-wrapper {
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  position: relative;
+}
+
+.table-wrapper {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 120, 215, 0.7) transparent;
+}
+
+.table-wrapper::-webkit-scrollbar {
+  width: 16px;
+  height: 16px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 8px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(0, 120, 215, 0.7);
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 120, 215, 0.9);
+}
+
 /* No Data States */
 .no-reports {
   margin-top: 32px;

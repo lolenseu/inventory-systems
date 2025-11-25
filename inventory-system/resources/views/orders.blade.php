@@ -1,5 +1,5 @@
 @extends('layout')
-@section('title', 'Orders Management')
+@section('title', 'Orders')
 
 @section('content')
 
@@ -9,7 +9,7 @@
   <div class="orders-header">
     <div class="header-left">
       <h2>Orders</h2>
-      <a id="printOrdersCv" class="print-cv-link">Print CV</a>
+      <a id="printOrdersCv" class="print-cv-link">Print Order</a>
     </div>
     <div class="header-actions">
       <label class="filter-label">Filter:</label>
@@ -56,7 +56,7 @@
           <td class="products-cell">
             @foreach($order->items as $item)
               <div class="product-item">
-                {{ $item->product->name }} ({{ $item->quantity }})
+                {{ $item->product ? $item->product->name : 'N/A' }} ({{ $item->quantity }})
               </div>
             @endforeach
           </td>
@@ -67,7 +67,9 @@
             <button type="button" class="view-btn"
               data-id="{{ $order->id }}"
               data-order-number="{{ $order->order_number }}"
-              data-customer-id="{{ $order->customer_id }}"
+              data-product-id="{{ $order->items->first() ? ($order->items->first()->product ? $order->items->first()->product->id : '') : '' }}"
+              data-quantity="{{ $order->items->first() ? $order->items->first()->quantity : 1 }}"
+              data-price="{{ $order->items->first() ? $order->items->first()->price : 0 }}"
               data-customer="{{ $order->customer ? $order->customer->full_name : 'N/A' }}"
               data-customer-email="{{ $order->customer ? $order->customer->email : 'N/A' }}"
               data-total="{{ $order->total_amount }}"
@@ -76,13 +78,14 @@
               data-items="{{ json_encode($order->items->map(function($item) {
                 return [
                   'product_id' => $item->product_id,
-                  'product_name' => $item->product->name,
+                  'product_name' => $item->product ? $item->product->name : 'N/A',
                   'quantity' => $item->quantity,
                   'price' => $item->price,
                   'subtotal' => $item->quantity * $item->price
                 ];
               })) }}"
               data-created="{{ $order->created_at->format('M d, Y - h:i A') }}">View</button>
+            @if(!in_array($order->status, ['delivered', 'declined']))
             <button type="button" class="edit-btn"
               data-id="{{ $order->id }}"
               data-order-number="{{ $order->order_number }}"
@@ -92,6 +95,7 @@
               data-price="{{ $order->items->first() ? $order->items->first()->price : 0 }}"
               data-status="{{ $order->status }}"
               data-notes="{{ $order->notes }}">Edit</button>
+            @endif
           </td>
         </tr>
         @endforeach
@@ -281,28 +285,11 @@
 
         <div class="modal-actions">
           <button type="submit" class="submit-btn">Save Changes</button>
-          <button type="button" class="delete-btn" id="deleteOrderBtn">Delete Order</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Delete Order Modal -->
-  <div id="deleteOrderModal" class="modal">
-    <div class="modal-content">
-      <span class="close-btn" id="closeDeleteOrderBtn">×</span>
-      <h3>Confirm Delete</h3>
-      <p>Are you sure you want to delete this order? This action cannot be undone and will restore the product quantities to inventory.</p>
-      <form id="deleteOrderForm" method="POST">
-        @csrf
-        @method('DELETE')
-        <div class="delete-actions">
-          <button type="submit" class="delete-confirm-btn">Delete Order</button>
-          <button type="button" class="cancel-confirm-btn" id="cancelDeleteOrderBtn">Cancel</button>
-        </div>
-      </form>
-    </div>
-  </div>
 </div>
 
 <button id="backToTop" class="back-to-top">Back to Top</button>

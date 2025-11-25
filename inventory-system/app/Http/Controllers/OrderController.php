@@ -151,6 +151,13 @@ class OrderController extends Controller
         $oldProductId = $orderItem->product_id;
         $newProductId = $data['product_id'];
 
+        // If order is delivered, don't allow editing
+        if ($order->status === 'delivered') {
+            return redirect()->back()
+                ->withErrors(['status' => 'Cannot edit delivered orders'])
+                ->withInput();
+        }
+
         // If product changed, restore old product stock and check new product stock
         if ($oldProductId != $newProductId) {
             // Restore old product stock
@@ -205,7 +212,8 @@ class OrderController extends Controller
         // Restore stock before deleting
         foreach ($order->items as $item) {
             $product = $item->product;
-            if ($product) {
+            if ($product && !in_array($order->status, ['delivered'])) {
+                // Only restore stock if order is not delivered
                 $product->quantity += $item->quantity;
                 $product->save();
             }
@@ -238,7 +246,7 @@ class OrderController extends Controller
             if (!$product) continue;
 
             if ($product && in_array($oldStatus, ['approved', 'delivered']) && $newStatus === 'declined') {
-                // Return stock when order is declined
+                // Return stock when order is declined from approved/delivered
                 $product->quantity += $item->quantity;
                 $product->save();
             } elseif ($product && in_array($oldStatus, ['pending', 'declined']) && $newStatus === 'approved') {

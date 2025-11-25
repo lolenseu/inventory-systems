@@ -59,9 +59,9 @@ class ReportsController extends Controller
             // Best customer: most orders or revenue
             $bestCustomer = DB::table('orders')
                 ->join('customers', 'orders.customer_id', '=', 'customers.id')
-                ->whereBetween('created_at', [$startDate, $endDate])
-                ->whereMonth('created_at', $month->month_num)
-                ->whereYear('created_at', $month->year_num)
+                ->whereBetween('orders.created_at', [$startDate, $endDate])
+                ->whereMonth('orders.created_at', $month->month_num)
+                ->whereYear('orders.created_at', $month->year_num)
                 ->select('customers.full_name', DB::raw('COUNT(*) as order_count'))
                 ->groupBy('customers.id', 'customers.full_name')
                 ->orderByDesc('order_count')
