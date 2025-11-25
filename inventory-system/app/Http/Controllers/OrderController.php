@@ -98,7 +98,7 @@ class OrderController extends Controller
             'price' => $data['unit_price'],
         ]);
 
-        // Reduce the product quantity
+        // Deduct stock immediately on order creation
         $product->quantity -= $data['quantity'];
         $product->save();
 
@@ -234,7 +234,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
-            'status' => 'required|string|in:pending,approved,declined,delivered',
+            'status' => 'required|string|in:pending,approved,delivered,declined',
         ]);
 
         $oldStatus = $order->status;
@@ -245,19 +245,26 @@ class OrderController extends Controller
             $product = $item->product;
             if (!$product) continue;
 
-            if ($product && in_array($oldStatus, ['approved', 'delivered']) && $newStatus === 'declined') {
-                // Return stock when order is declined from approved/delivered
+            // When transitioning to delivered: no stock change (already deducted on creation)
+            if ($oldStatus !== 'delivered' && $newStatus === 'delivered') {
+                // Stock was already deducted when order was created
+                // No additional action needed
+            }
+
+            // When transitioning to declined: return stock (from any other status)
+            if ($oldStatus !== 'declined' && $newStatus === 'declined') {
                 $product->quantity += $item->quantity;
                 $product->save();
-            } elseif ($product && in_array($oldStatus, ['pending', 'declined']) && $newStatus === 'approved') {
-                // Deduct stock when order is approved
-                if ($product->quantity < $item->quantity) {
-                    return redirect()->back()->with('error', 'Insufficient stock to approve this order.');
-                }
-                $product->quantity -= $item->quantity;
+                
+                // Debug: Log the stock change
+                \Log::info("Returning stock: Product ID {$product->id}, Name: {$product->name}, Quantity returned: {$item->quantity}, New total: {$product->quantity}");
+            }
+
+            // When transitioning from delivered to other status: restore stock first, then apply new status logic
+            if ($oldStatus === 'delivered' && $newStatus !== 'delivered' && $newStatus !== 'declined') {
+                $product->quantity += $item->quantity;
                 $product->save();
             }
-            // Note: delivered status doesn't change stock (already deducted on approval)
         }
 
         $order->status = $newStatus;

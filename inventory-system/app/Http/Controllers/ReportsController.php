@@ -18,14 +18,18 @@ class ReportsController extends Controller
         // Summary stats for the year
         $summary = [
             'total_orders' => Order::whereBetween('created_at', [$startDate, $endDate])->count(),
-            'total_sales' => Order::whereBetween('created_at', [$startDate, $endDate])->sum('total_amount'),
-            'avg_order_value' => Order::whereBetween('created_at', [$startDate, $endDate])->avg('total_amount') ?? 0,
+            'total_sales' => Order::whereBetween('created_at', [$startDate, $endDate])
+                                     ->where('status', 'delivered')
+                                     ->sum('total_amount'),
+            'avg_order_value' => Order::whereBetween('created_at', [$startDate, $endDate])
+                                     ->where('status', 'delivered')
+                                     ->avg('total_amount') ?? 0,
             'pending_orders' => Order::whereBetween('created_at', [$startDate, $endDate])
                                      ->where('status', 'pending')
                                      ->count(),
         ];
 
-        // Monthly data: aggregate by month
+        // Monthly data: aggregate by month (delivered orders only)
         $monthlyRaw = DB::table('orders')
             ->select(
                 DB::raw('MONTH(created_at) as month_num'),
@@ -35,6 +39,7 @@ class ReportsController extends Controller
                 DB::raw('AVG(total_amount) as avg_order_value')
             )
             ->whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'delivered')
             ->groupBy('year_num', 'month_num')
             ->orderBy('year_num')
             ->orderBy('month_num')

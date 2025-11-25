@@ -27,8 +27,8 @@
 
       @auth
         <li><a href="{{ url('/dashboard') }}">Dashboard</a></li>
-        <li><a href="{{ url('/orders') }}">Orders</a></li>
         <li><a href="{{ url('/products') }}">Products</a></li>
+        <li><a href="{{ url('/orders') }}">Orders</a></li>
         <li><a href="{{ url('/reports') }}">Reports</a></li>
         
         <li>
