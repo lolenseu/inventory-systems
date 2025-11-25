@@ -158,6 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
   qs('#closeProductModal').onclick = () => hideModal(productModal);
   window.addEventListener('click', e => { if (e.target === productModal) hideModal(productModal); });
 
+  // Make openProductModal globally accessible
   window.openProductModal = async id => {
     const data = await fetchJSON(`/shopai/product/${id}`);
     if (!data.success) return showMessage('Product not found', 'error');
@@ -337,7 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <button class="cart-item-remove"
             onclick="${item.isLocal ?
               `removeLocalCartItem(${index})` :
-              `removeServerCartItem(${item.id})`}">&times;</button>
+              `removeServerCartItem(${item.id})`}">×</button>
         </div>
       `;
     });

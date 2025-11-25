@@ -7,6 +7,8 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ShopAIController;
+use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\ReportsController;
 
 // Redirect root to the login page
 Route::redirect('/', '/login');
@@ -37,7 +39,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 
     // Reports
-    Route::get('/reports', [\App\Http\Controllers\ReportsController::class, 'index'])->name('reports.index');
+    Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
 });
  
 // Main ShopAI page
@@ -75,4 +77,10 @@ Route::prefix('shopai')->group(function () {
         Route::get('/orders', [ShopAIController::class, 'getOrders'])->name('customer.orders');
         Route::get('/order/{id}', [ShopAIController::class, 'getOrder'])->name('customer.order');
     });
+});
+
+// Legacy routes for backward compatibility
+Route::middleware(['auth'])->group(function () {
+    Route::resource('customers', CustomerController::class);
+    Route::resource('items', ItemController::class);
 });

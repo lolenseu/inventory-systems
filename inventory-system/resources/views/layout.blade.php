@@ -13,7 +13,7 @@
 <body>
   <nav class="navbar">
     <div class="left-section">
-      <div class="logo">Inventory System</div>
+      <div class="logo">Buy & Sell Inventory System</div>
       @auth
         <div class="username">{{ Auth::user()->name }}</div>
       @endauth
