@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function(){
             <thead>
               <tr>
                 <th>Month</th>
-                <th>Orders Count</th>
+                <th>Delivered</th>
                 <th>Total Sales</th>
                 <th>Avg Order Value</th>
                 <th>Top Product</th>
@@ -212,6 +212,12 @@ document.addEventListener('DOMContentLoaded', function(){
           }
         }
       }
+    });
+  }
+
+  if (refreshBtn) {
+    refreshBtn.addEventListener('click', () => {
+      window.location.reload();
     });
   }
 

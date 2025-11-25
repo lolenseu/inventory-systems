@@ -81,7 +81,7 @@
           <thead>
             <tr>
               <th>Month</th>
-              <th>Orders Count</th>
+              <th>Delivered</th>
               <th>Total Sales</th>
               <th>Avg Order Value</th>
               <th>Top Product</th>

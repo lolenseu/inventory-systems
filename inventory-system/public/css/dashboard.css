@@ -64,7 +64,7 @@
 }
 
 .card-total::before {
-  background: linear-gradient(90deg, #48bb78, #38a169, #48bb78);
+  background: linear-gradient(90deg, #3182ce, #2c5282, #3182ce);
 }
 
 .card-warning::before {
@@ -76,7 +76,7 @@
 }
 
 .card-success::before {
-  background: linear-gradient(90deg, #3182ce, #2c5282, #3182ce);
+  background: linear-gradient(90deg, #48bb78, #38a169, #48bb78);
 }
 
 .card-icon {
@@ -93,8 +93,9 @@
 }
 
 .card-total .card-icon {
-  --card-color: #48bb78;
-  --card-color-dark: #38a169;
+  --card-color: #3182ce;
+  --card-color-dark: #2c5282;
+  
 }
 
 .card-warning .card-icon {
@@ -108,8 +109,8 @@
 }
 
 .card-success .card-icon {
-  --card-color: #3182ce;
-  --card-color-dark: #2c5282;
+  --card-color: #48bb78;
+  --card-color-dark: #38a169;
 }
 
 .summary-title {
@@ -167,8 +168,8 @@
 }
 
 .summary-card:nth-child(1) {
-  --card-color: #48bb78;
-  --card-color-dark: #38a169;
+  --card-color: #3182ce;
+  --card-color-dark: #2c5282;
 }
 
 .summary-card:nth-child(2) {
@@ -182,8 +183,8 @@
 }
 
 .summary-card:nth-child(4) {
-  --card-color: #3182ce;
-  --card-color-dark: #2c5282;
+  --card-color: #48bb78;
+  --card-color-dark: #38a169;
 }
 
 .table-area {

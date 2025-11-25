@@ -82,6 +82,25 @@
     </div>
   </section>
 
+  <section class="summary-section" style="margin-top: 30px;">
+    <div class="summary-card">
+      <h3 class="summary-title">Total Orders</h3>
+      <p class="summary-value">{{ $summary['total_orders'] ?? 0 }}</p>
+    </div>
+    <div class="summary-card">
+      <h3 class="summary-title">Avg Order Value</h3>
+      <p class="summary-value">₱{{ number_format($summary['avg_order_value'] ?? 0, 2) }}</p>
+    </div>
+    <div class="summary-card">
+      <h3 class="summary-title">Pending Orders</h3>
+      <p class="summary-value">{{ $summary['pending_orders'] ?? 0 }}</p>
+    </div>
+    <div class="summary-card">
+      <h3 class="summary-title">Total Sales</h3>
+      <p class="summary-value">₱{{ number_format($summary['total_sales'] ?? 0, 2) }}</p>
+    </div>
+  </section>
+
   <section class="table-area" style="margin-top: 30px;">
     <div class="dashboard-container">
       <div class="table-header">
