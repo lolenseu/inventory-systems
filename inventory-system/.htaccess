@@ -1,0 +1,16 @@
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Redirect all requests to Laravel public folder
+    RewriteCond %{REQUEST_URI} !^/inventory-system/public/
+    RewriteRule ^(.*)$ /inventory-system/public/$1 [L,QSA]
+
+    # Handle front controller
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [L]
+</IfModule>
