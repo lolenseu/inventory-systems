@@ -59,3 +59,79 @@
   font-size: 14px;
   margin-top: 10px;
 }
+
+/* MOBILE RESPONSIVE STYLES */
+@media (max-width: 768px) {
+  .form-container.register {
+    width: 90%;
+    padding: 30px 25px;
+  }
+
+  .form-container.register h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .form-container.register input {
+    width: 100%;
+    padding: 12px 12px;
+    font-size: 16px;
+  }
+
+  .form-container.register button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-container.register {
+    width: 95%;
+    padding: 25px 20px;
+    margin: 40px auto;
+  }
+
+  .form-container.register h2 {
+    font-size: 22px;
+    margin-bottom: 18px;
+  }
+
+  .form-container.register input {
+    padding: 12px 10px;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+
+  .form-container.register button {
+    padding: 12px 10px;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+
+  .form-container.register .success,
+  .form-container.register .error {
+    font-size: 13px;
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 360px) {
+  .form-container.register {
+    padding: 20px 15px;
+  }
+
+  .form-container.register h2 {
+    font-size: 20px;
+  }
+
+  .form-container.register input {
+    padding: 10px 8px;
+    font-size: 14px;
+  }
+
+  .form-container.register button {
+    padding: 10px 8px;
+    font-size: 14px;
+  }
+}

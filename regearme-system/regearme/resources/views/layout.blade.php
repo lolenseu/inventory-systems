@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="@yield('body_class')">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>@yield('title', 'Inventory System')</title>
+  <title>@yield('title', 'Regearme')</title>
   <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
   <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/256/5735/5735191.png">
   @yield('css')
@@ -12,9 +12,15 @@
   <meta http-equiv="Expires" content="0">
 </head>
 <body>
+  <!-- Video Background -->
+  <video id="bg-video" class="video-background" autoplay muted loop playsinline>
+    <source src="{{ asset('video/albion.mp4') }}" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
   <nav class="navbar">
     <div class="left-section">
-      <div class="logo">Buy & Sell Inventory System</div>
+      <div class="logo">ReGearMe</div>
       @auth
         <div class="username">{{ Auth::user()->name }}</div>
       @endauth
@@ -23,14 +29,11 @@
     <ul class="nav-links">
       @guest
         <li><a href="{{ route('login') }}">Login</a></li>
-        <!--<li><a href="{{ route('register') }}">Sign Up</a></li>-->
+        <li><a href="{{ route('register') }}">Sign Up</a></li>
       @endguest
 
       @auth
         <li><a href="{{ url('/dashboard') }}">Dashboard</a></li>
-        <li><a href="{{ url('/products') }}">Products</a></li>
-        <li><a href="{{ url('/orders') }}">Orders</a></li>
-        <li><a href="{{ url('/reports') }}">Reports</a></li>
         
         <li>
           <a href="{{ route('login') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
@@ -67,6 +70,27 @@
         content.style.transition = "opacity 0.4s ease";
         setTimeout(() => content.style.opacity = "1", 50);
       }, 200);
+    });
+
+    // Smooth page transitions to prevent video reset
+    document.addEventListener('DOMContentLoaded', function() {
+      const navLinks = document.querySelectorAll('.nav-links a');
+      
+      navLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+          const href = this.getAttribute('href');
+          if (href && !href.startsWith('#') && !href.startsWith('http')) {
+            e.preventDefault();
+            
+            const content = document.getElementById('main-content');
+            content.style.opacity = '0';
+            
+            setTimeout(() => {
+              window.location.href = href;
+            }, 200);
+          }
+        });
+      });
     });
   </script>
 </body>

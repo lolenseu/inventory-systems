@@ -22,8 +22,8 @@
 
   <form method="POST" action="{{ route('register') }}" onsubmit="return validatePasswords()">
     @csrf
-    <input type="text" name="username" placeholder="Username" required>
-    <input type="email" name="email" placeholder="Email" required>
+    <input type="text" name="in_game_name" placeholder="In-Game Name" required>
+    <input type="number" name="in_game_id" placeholder="In-Game ID" required>
     <input type="password" name="password" id="password" placeholder="Password" required>
     <input type="password" name="password_confirmation" id="confirm_password" placeholder="Confirm Password" required>
     <button type="submit">Create Account</button>

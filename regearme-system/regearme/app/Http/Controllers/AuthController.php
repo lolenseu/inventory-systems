@@ -29,14 +29,14 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $request->validate([
-            'username' => 'required|min:3|max:50',
-            'email' => 'required|email|unique:users,email',
+            'in_game_name' => 'required|unique:users,in_game_name',
+            'in_game_id' => 'required|unique:users,in_game_id',
             'password' => 'required|min:6|confirmed',
         ]);
 
         $user = new User();
-        $user->name = $request->username;
-        $user->email = $request->email;
+        $user->in_game_name = $request->in_game_name;
+        $user->in_game_id = $request->in_game_id;
         $user->password = Hash::make($request->password);
         $user->save();
 
@@ -46,26 +46,26 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'username' => 'required',
+            'in_game_name' => 'required',
             'password' => 'required',
         ]);
 
         $credentials = [
-            'name' => $request->username,
+            'in_game_name' => $request->in_game_name,
             'password' => $request->password
         ];
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            return redirect('/dashboard')->with('success', 'Welcome back, ' . Auth::user()->name . '!');
+            return redirect('/dashboard')->with('success', 'Welcome back, ' . Auth::user()->in_game_name . '!');
         }
 
-        return back()->with('error', 'Invalid username or password.');
+        return back()->with('error', 'Invalid in-game name or password.');
     }
 
     public function logout(Request $request)
     {
-        $name = Auth::user()->name ?? 'User';
+        $name = Auth::user()->in_game_name ?? 'User';
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
