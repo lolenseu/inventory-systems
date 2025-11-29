@@ -12,17 +12,16 @@
   <meta http-equiv="Expires" content="0">
 </head>
 <body>
-  <!-- Video Background -->
-  <video id="bg-video" class="video-background" autoplay muted loop playsinline preload="auto">
-    <source src="{{ asset('video/albion.mp4') }}" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
+  <!-- Animated Background -->
+  <div class="animated-background">
+    <img src="{{ asset('gif/albion.gif') }}" alt="Animated Background" class="background-gif" />
+  </div>
 
   <nav class="navbar">
     <div class="left-section">
       <div class="logo">ReGearMe</div>
       @auth
-        <div class="username">{{ Auth::user()->name }}</div>
+        <div class="username">{{ Auth::user()->in_game_name }}</div>
       @endauth
     </div>
 
@@ -55,6 +54,22 @@
     </div>
   </main>
 
+  <div class="bottom-left-info">
+    <p id="raw-content"></p>
+    <p class="developer-tag">© 2025 ReGearMe | Developed by lolenseu</p>
+  </div>
+
   <script src="{{ asset('js/layout.js') }}"></script>
+  <script>
+  fetch('{{ url("/raw-content") }}')
+      .then(response => response.text())
+      .then(data => {
+          document.getElementById('raw-content').innerText = data;
+      })
+      .catch(err => {
+          console.error('Error loading raw file:', err);
+          document.getElementById('raw-content').innerText = '';
+      });
+  </script>
 </body>
 </html>
