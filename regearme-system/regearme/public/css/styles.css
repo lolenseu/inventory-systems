@@ -33,6 +33,11 @@ body {
   opacity: 0.7;
   object-fit: cover;
   transition: opacity 0.5s ease-in-out;
+  /* Improve caching and performance */
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 /* Overlay for better text visibility */
@@ -200,14 +205,13 @@ main {
 
 @media (max-width: 480px) {
   .navbar {
-    padding: 12px 10px;
-    flex-direction: column;
-    gap: 10px;
+    padding: 12px 18px;
   }
 
   .left-section {
-    width: 100%;
-    justify-content: space-between;
+    width: auto;
+    justify-content: flex-start;
+    gap: 20px;
   }
 
   .logo {
@@ -220,21 +224,20 @@ main {
   }
 
   .nav-links {
-    width: 100%;
-    justify-content: center;
-    gap: 8px;
+    margin-left: auto;
+    gap: 12px;
   }
 
   .nav-links a {
     font-size: 14px;
-    padding: 0 2px;
+    padding: 0 4px;
   }
 
   main {
     padding-top: 90px;
     padding-bottom: 40px;
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: 15px;
+    padding-right: 15px;
   }
 
   .back-to-top {
