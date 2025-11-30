@@ -20,16 +20,20 @@
   <nav class="navbar">
     <div class="left-section">
       <div class="logo">ReGearMe</div>
+
       @auth
         <div class="username">{{ Auth::user()->in_game_name }}</div>
       @endauth
     </div>
 
     <ul class="nav-links">
+      {{-- DISABLED LOGIN & SIGNUP TEMPORARILY --}}
+      {{--
       @guest
         <li><a href="{{ route('login') }}">Login</a></li>
         <li><a href="{{ route('register') }}">Sign Up</a></li>
       @endguest
+      --}}
 
       @auth
         <li><a href="{{ url('/dashboard') }}">Dashboard</a></li>

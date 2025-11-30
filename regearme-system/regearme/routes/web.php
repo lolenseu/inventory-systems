@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use Illuminate\Support\Facades\Auth;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,9 +18,16 @@ use App\Http\Controllers\DashboardController;
 */
 
 // Authentication routes
+
+// OLD: Redirect root to login (DISABLED FOR NOW)
+// Route::get('/', function () {
+//     return redirect()->route('login');
+// });
+
+// NEW: Load ReGearMe front page
 Route::get('/', function () {
-    return redirect()->route('login');
-});
+    return view('regearme'); // your public welcome page
+})->name('home');
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);

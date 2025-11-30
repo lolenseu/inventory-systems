@@ -18,28 +18,28 @@ body {
   overflow-x: hidden;
 }
 
-/* Animated Background */
+/* ANIMATED BACKGROUND */
 .animated-background {
   position: fixed;
-  right: 0;
-  bottom: 0;
-  min-width: 100%;
-  min-height: 100%;
-  width: auto;
-  height: auto;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   z-index: -3;
   filter: blur(2px);
   opacity: 1;
   object-fit: cover;
-  transition: opacity 0.5s ease-in-out;
-  /* Improve caching and performance */
-  will-change: transform;
+
+  /* Animation performance */
+  will-change: opacity, transform;
   backface-visibility: hidden;
-  -webkit-transform: translateZ(0);
   transform: translateZ(0);
+
+  transition: opacity 0.5s ease-in-out;
 }
 
-.animated-background img {
+.animated-background img,
+.animated-background video {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -67,14 +67,14 @@ main {
   padding-right: 20px;
 }
 
-/* NAVBAR STYLES (Shared across all pages) */
+/* NAVBAR STYLES */
 .navbar {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   backdrop-filter: blur(10px);
-  background-color:rgba(18, 18, 18, 0.6);
+  background-color: rgba(18, 18, 18, 0.6);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -119,7 +119,7 @@ main {
   color: #fff;
 }
 
-/* SPINNER (Shared across all pages) */
+/* SPINNER */
 #main-loader {
   width: 100%;
   height: 60vh;
@@ -247,7 +247,7 @@ main {
 
   .username {
     font-size: 14px;
-    display: none; /* Hide username on very small screens */
+    display: none;
   }
 
   .nav-links {
