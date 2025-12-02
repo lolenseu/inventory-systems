@@ -58,6 +58,13 @@
 .form-container.register .error {
   font-size: 14px;
   margin-top: 10px;
+  list-style: none;
+  padding: 0;
+}
+
+.form-container.register .error li {
+  list-style: none;
+  margin-left: 0;
 }
 
 /* MOBILE RESPONSIVE STYLES */

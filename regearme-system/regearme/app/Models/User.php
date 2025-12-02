@@ -12,24 +12,28 @@ class User extends Authenticatable
     use HasApiTokens, HasFactory, Notifiable;
 
     /**
-     * Custom primary key: in_game_name (string, matches your table/login).
+     * Primary key: internal auto-increment id.
      */
-    protected $primaryKey = 'in_game_name';
-    public $incrementing = false;
-    protected $keyType = 'string';
+    protected $primaryKey = 'id';
+    public $incrementing = true;
+    protected $keyType = 'int';
 
     /**
-     * The attributes that are mass assignable.
+     * Mass assignable attributes.
      */
     protected $fillable = [
+        'user_id',
+        'guild_id',
         'in_game_name',
-        'in_game_id',
+        'player_id',
         'password',
-        'role',  // officer/user
+        'role',
+        'verification_status',
+        'verified_at',
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
+     * Hidden attributes for serialization.
      */
     protected $hidden = [
         'password',
@@ -37,17 +41,47 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be cast.
+     * Attribute casts.
      */
     protected $casts = [
         'password' => 'hashed',
+        'verified_at' => 'datetime',
     ];
 
     /**
-     * Get the login username field (for Auth::attempt).
+     * Booted method to set user_id = id automatically after creation.
+     */
+    protected static function booted()
+    {
+        static::created(function ($user) {
+            if (!$user->user_id) {
+                $user->user_id = $user->id;
+                $user->save();
+            }
+        });
+    }
+
+    /**
+     * Custom login username for Auth::attempt.
      */
     public function getAuthIdentifierName(): string
     {
         return 'in_game_name';
+    }
+
+    /**
+     * Relationship: user belongs to a guild.
+     */
+    public function guild()
+    {
+        return $this->belongsTo(Guild::class, 'guild_id', 'guild_id');
+    }
+
+    /**
+     * Relationship: user has many requests.
+     */
+    public function requests()
+    {
+        return $this->hasMany(RequestDump::class, 'user_id', 'user_id');
     }
 }

@@ -31,13 +31,10 @@
     </div>
 
     <ul class="nav-links">
-      {{-- DISABLED LOGIN & SIGNUP TEMPORARILY --}}
-      {{--
       @guest
         <li><a href="{{ route('login') }}">Login</a></li>
         <li><a href="{{ route('register') }}">Sign Up</a></li>
       @endguest
-      --}}
 
       @auth
         <li><a href="{{ url('/dashboard') }}">Dashboard</a></li>
@@ -69,15 +66,25 @@
 
   <script src="{{ asset('js/layout.js') }}"></script>
   <script>
-  fetch('{{ url("/raw-content") }}')
-      .then(response => response.text())
-      .then(data => {
-          document.getElementById('raw-content').innerText = data;
-      })
-      .catch(err => {
-          console.error('Error loading raw file:', err);
-          document.getElementById('raw-content').innerText = '';
-      });
+    const verUrl = 'https://raw.githubusercontent.com/lolenseu/inventory-systems/main/regearme-system/VERSION';
+    const commitsUrl = 'https://api.github.com/repos/lolenseu/inventory-systems/commits?path=regearme-system/VERSION&sha=main&per_page=1';
+
+    Promise.all([
+      fetch(verUrl).then(res => res.text()),
+      fetch(commitsUrl).then(res => res.json())
+    ])
+    .then(([fileContent, commits]) => {
+      if (commits.length > 0) {
+        const commitSha = commits[0].sha.substring(0, 7);
+        document.getElementById('raw-content').innerText = `${fileContent} - ${commitSha}`;
+      } else {
+        document.getElementById('raw-content').innerText = fileContent;
+      }
+    })
+    .catch(err => {
+      console.error('Error fetching raw file or commit SHA:', err);
+      document.getElementById('raw-content').innerText = '';
+    });
   </script>
 </body>
 </html>

@@ -18,15 +18,8 @@ use Illuminate\Support\Facades\Auth;
 */
 
 // Authentication routes
-
-// OLD: Redirect root to login (DISABLED FOR NOW)
-// Route::get('/', function () {
-//     return redirect()->route('login');
-// });
-
-// NEW: Load ReGearMe front page
 Route::get('/', function () {
-    return view('regearme'); // your public welcome page
+    return view('regearme');
 })->name('home');
 
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -68,17 +61,4 @@ Route::middleware(['auth'])->group(function () {
 
     // User routes
     Route::get('/user/dashboard', [DashboardController::class, 'userDashboard'])->name('user.dashboard');
-});
-
-// Route to serve raw file content for bottom-left <p>
-Route::get('/raw-content', function () {
-    // Path to VERSION file (one level up from regearme-system)
-    $path = base_path('../VERSION');
-
-    if (file_exists($path)) {
-        return response(file_get_contents($path), 200)
-            ->header('Content-Type', 'text/plain');
-    }
-
-    return response('', 404);
 });

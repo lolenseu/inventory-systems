@@ -17,7 +17,7 @@ return new class extends Migration
 
             $table->bigInteger('guild_id')->unsigned()->nullable();
 
-            $table->string('in_game_id')->unique();
+            $table->string('player_id')->unique();
             $table->string('in_game_name')->unique();
             $table->string('password');
 

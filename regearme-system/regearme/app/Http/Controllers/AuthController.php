@@ -9,90 +9,101 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-
+    /**
+     * Show the registration form.
+     */
     public function showRegister()
     {
         if (Auth::check()) {
             return redirect('/dashboard');
         }
+
         return view('auth.register');
     }
 
+    /**
+     * Show the login form.
+     */
     public function showLogin()
     {
         if (Auth::check()) {
             return redirect('/dashboard');
         }
+
         return view('auth.login');
     }
 
+    /**
+     * Handle user registration.
+     */
     public function register(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'in_game_name' => 'required|unique:users,in_game_name',
-            'in_game_id' => 'required|unique:users,in_game_id',
-            'password' => 'required|min:6|confirmed',
+            'player_id'    => 'required|unique:users,player_id',
+            'password'     => 'required|min:6|confirmed',
+            'guild_id'     => 'nullable|exists:guilds,guild_id',
         ]);
 
         $user = new User();
-        $user->in_game_name = $request->in_game_name;
-        $user->in_game_id = $request->in_game_id;
-        $user->password = Hash::make($request->password);
-        
-        // Set role based on in_game_name using role column
-        if (stripos($request->in_game_name, '_officer') !== false || 
-            stripos($request->in_game_name, 'officer') !== false) {
-            $user->role = 'officer';
-        } else {
-            $user->role = 'user';
-        }
-        
+        $user->in_game_name = $data['in_game_name'];
+        $user->player_id = $data['player_id'];
+        $user->guild_id = $data['guild_id'] ?? null;
+        $user->password = Hash::make($data['password']);
+
+        $user->role = $this->determineRole($user->in_game_name);
+
         $user->save();
 
         return redirect('/login')->with('success', 'Account created successfully! Please log in.');
     }
 
+    /**
+     * Handle user login.
+     */
     public function login(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'in_game_name' => 'required',
-            'password' => 'required',
+            'password'     => 'required',
         ]);
 
-        $credentials = [
-            'in_game_name' => $request->in_game_name,
-            'password' => $request->password
-        ];
-
-        if (Auth::attempt($credentials)) {
+        if (Auth::attempt($data)) {
             $request->session()->regenerate();
-            
-            // Get the authenticated user
+
             $user = Auth::user();
-            
-            // Ensure role is set if not already
+
+            // Ensure role is set if missing
             if (!$user->role) {
-                if (stripos($user->in_game_name, '_officer') !== false || 
-                    stripos($user->in_game_name, 'officer') !== false) {
-                    $user->role = 'officer';
-                } else {
-                    $user->role = 'user';
-                }
+                $user->role = $this->determineRole($user->in_game_name);
                 $user->save();
             }
-            
-            // Redirect to dashboard - role will be checked there
+
             return redirect('/dashboard')->with('success', 'Welcome back, ' . $user->in_game_name . '!');
         }
 
         return back()->with('error', 'Invalid in-game name or password.');
     }
 
+    /**
+     * Handle user logout.
+     */
     public function logout(Request $request)
     {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect('/login');
+    }
+
+    /**
+     * Determine the role based on in_game_name.
+     */
+    private function determineRole(string $inGameName): string
+    {
+        return (stripos($inGameName, '_officer') !== false || stripos($inGameName, 'officer') !== false)
+            ? 'officer'
+            : 'user';
     }
 }
