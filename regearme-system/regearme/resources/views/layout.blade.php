@@ -3,18 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>@yield('title', 'Regearme')</title>
+  <title>@yield('title', 'ReGearMe')</title>
   <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
+
+  <!-- Google Fonts: Poppins -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
   <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/256/5735/5735191.png">
   @yield('css')
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
+  <meta http-equiv="Cache-Control" content="public, max-age=86400">
+  <meta http-equiv="Pragma" content="cache">
+  <meta http-equiv="Expires" content="Sun, 31 Dec 2030 23:59:59 GMT">
 </head>
 <body>
   <!-- Animated Background -->
   <div class="animated-background">
-    <img src="{{ asset('gif/albion.gif') }}" alt="Animated Background" class="background-gif" />
+    <img src="https://github.com/lolenseu/inventory-systems/blob/main/regearme-system/regearme/public/gif/albion.gif?raw=true" alt="Animated Background" class="background-gif" />
   </div>
 
   <nav class="navbar">

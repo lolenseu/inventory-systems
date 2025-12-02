@@ -148,6 +148,11 @@
   color: #e74c3c;
   font-weight: 600;
 }
+.user-dashboard-container td.status-delivered,
+.user-dashboard-container .status-delivered {
+  color: #9b59b6;
+  font-weight: 600;
+}
 
 .user-dashboard-container button {
   border: none;
@@ -459,39 +464,47 @@
   background: #5a6268;
 }
 
-/* Dashboard Cards */
+/* Dashboard Cards - Table Matching Design */
 .dashboard-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
 
 .card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: #fafafa;
+  border: 2px solid #eee;
+  border-radius: 8px;
   padding: 20px;
-  border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
   text-align: center;
+  box-shadow: none;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  background: #f7f7f7;
+  transform: translateY(-2px);
 }
 
 .card h3 {
   margin: 0 0 10px 0;
-  color: white;
+  color: #333;
   font-size: 18px;
+  font-weight: 600;
 }
 
 .card .value {
   font-size: 32px;
   font-weight: bold;
-  color: white;
+  color: #333;
 }
 
 .card .label {
-  color: rgba(255,255,255,0.9);
+  color: #666;
   font-size: 14px;
   margin-top: 5px;
+  font-weight: 500;
 }
 
 /* Mobile Responsive */
@@ -520,5 +533,22 @@
     border-bottom: 2px solid #e5e5e5;
     padding-right: 0;
     padding-bottom: 15px;
+  }
+
+  .dashboard-cards {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .card {
+    padding: 15px;
+  }
+
+  .card h3 {
+    font-size: 16px;
+  }
+
+  .card .value {
+    font-size: 24px;
   }
 }

@@ -1,5 +1,5 @@
 @extends('layout')
-@section('title', 'Officer Dashboard')
+@section('title', 'Dashboard')
 
 @section('content')
 <link rel="stylesheet" href="{{ asset('css/officer/dashboard.css') }}">
@@ -7,7 +7,7 @@
 <div class="dashboard-page">
   <div class="dashboard-header">
     <div class="header-left">
-      <h2>Officer Dashboard</h2>
+      <h2>Dashboard</h2>
       <a id="printCv" class="print-cv-link">Print Equipment</a>
     </div>
     <div class="header-actions">

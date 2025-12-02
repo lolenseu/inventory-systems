@@ -1,5 +1,5 @@
 @extends('layout')
-@section('title', 'User Dashboard')
+@section('title', 'Dashboard')
 
 @section('content')
 <link rel="stylesheet" href="{{ asset('css/user/dashboard.css') }}">
@@ -7,20 +7,20 @@
 <div class="user-dashboard-page">
   <div class="user-dashboard-header">
     <div class="header-left">
-      <h2>User Dashboard</h2>
+      <h2>Dashboard</h2>
       <a id="printCv" class="print-cv-link">Print Requests</a>
     </div>
     <div class="header-actions">
       <label class="filter-label">Filter:</label>
       <select id="statusFilter" class="filter-select">
         <option value="all">All</option>
-        <option value="available">Available</option>
         <option value="requested">Requested</option>
         <option value="approved">Approved</option>
         <option value="denied">Denied</option>
+        <option value="delivered">Delivered</option>
       </select>
       <label class="filter-label" for="searchInput">Search:</label>
-      <input id="searchInput" class="search-input" type="text" placeholder="Item Name or Type">
+      <input id="searchInput" class="search-input" type="text" placeholder="Request ID (e.g., 120125-1234)">
     </div>
   </div>
 
@@ -31,19 +31,19 @@
       <div class="label">All Your Requests</div>
     </div>
     <div class="card">
-      <h3>Available</h3>
-      <div class="value">{{ $availableCount ?? 0 }}</div>
-      <div class="label">Ready to Request</div>
-    </div>
-    <div class="card">
-      <h3>Requested</h3>
-      <div class="value">{{ $requestedCount ?? 0 }}</div>
-      <div class="label">Pending Approval</div>
+      <h3>Pending</h3>
+      <div class="value">{{ $availableCount + $requestedCount ?? 0 }}</div>
+      <div class="label">Pending Requests</div>
     </div>
     <div class="card">
       <h3>Approved</h3>
       <div class="value">{{ $approvedCount ?? 0 }}</div>
       <div class="label">Approved Requests</div>
+    </div>
+    <div class="card">
+      <h3>Delivered</h3>
+      <div class="value">{{ $deliveredCount ?? 0 }}</div>
+      <div class="label">Delivered Requests</div>
     </div>
   </div>
 
@@ -51,10 +51,9 @@
     <table>
       <thead>
         <tr>
-          <th>Item Name</th>
-          <th>Type</th>
-          <th>Quantity</th>
+          <th>Request ID</th>
           <th>Status</th>
+          <th>Note</th>
           <th>Request Date</th>
           <th>Action</th>
         </tr>
@@ -86,6 +85,10 @@
                   $statusClass = 'status-denied';
                   $statusLabel = 'Denied';
                   break;
+                case 'delivered':
+                  $statusClass = 'status-delivered';
+                  $statusLabel = 'Delivered';
+                  break;
                 default:
                   $statusClass = 'status-available';
                   $statusLabel = 'Available';
@@ -93,9 +96,8 @@
             @endphp
             <tr>
               <td class="name-cell">{{ $item->item_name }}</td>
-              <td>{{ $item->type }}</td>
-              <td>{{ $item->quantity }}</td>
               <td class="status-cell {{ $statusClass }}">{{ $statusLabel }}</td>
+              <td>{{ $item->type }}</td>
               <td>{{ $item->request_date ? $item->request_date->format('M d, Y') : 'N/A' }}</td>
               <td>
                 <button type="button" class="view-btn"
@@ -115,7 +117,7 @@
           @endforeach
         @else
           <tr>
-            <td colspan="6">
+            <td colspan="5">
               <div class="no-data">
                 <p>No Equipment Found</p>
               </div>
