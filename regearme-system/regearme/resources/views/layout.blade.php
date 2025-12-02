@@ -32,13 +32,14 @@
 
     <ul class="nav-links">
       @guest
+        <li><a href="{{ url('/') }}">Home</a></li>
         <li><a href="{{ route('login') }}">Login</a></li>
         <li><a href="{{ route('register') }}">Sign Up</a></li>
       @endguest
 
       @auth
-        <li><a href="{{ url('/dashboard') }}">Dashboard</a></li>
-        
+        <li><a href="{{ url('/') }}">Home</a></li>
+        <li><a href="{{ url('/dashboard') }}">Dashboard</a></li> 
         <li>
           <a href="{{ route('login') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
           <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display:none;">

@@ -148,7 +148,7 @@ main {
     position: fixed;
     bottom: 10px;
     left: 20px;
-    color: rgba(200, 200, 200, 0.6);
+    color: rgba(200, 200, 200, 0.5);
     font-size: 12px;
     line-height: 1.4;
     z-index: 500;
@@ -161,7 +161,7 @@ main {
 }
 
 .bottom-left-info .developer-tag {
-    color: rgba(180, 180, 180, 0.5);
+    color: rgba(180, 180, 180, 0.6);
 }
 
 

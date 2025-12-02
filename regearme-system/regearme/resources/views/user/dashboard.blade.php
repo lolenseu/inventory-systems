@@ -8,7 +8,7 @@
   <div class="user-dashboard-header">
     <div class="header-left">
       <h2>Dashboard</h2>
-      <a id="printCv" class="print-cv-link">Print Requests</a>
+      <a id="printCv" class="print-cv-link">Print CV</a>
     </div>
     <div class="header-actions">
       <label class="filter-label">Filter:</label>
@@ -119,7 +119,7 @@
           <tr>
             <td colspan="5">
               <div class="no-data">
-                <p>No Equipment Found</p>
+                <p>No Requests Found</p>
               </div>
             </td>
           </tr>
@@ -174,9 +174,41 @@
       </form>
     </div>
   </div>
+
+  <!-- Popup Modal -->
+  <div id="popupModal" class="popup-modal">
+    <div class="popup-modal-content">
+      <span class="close" onclick="closePopupModal()">&times;</span>
+
+      <h3>⚠️</h3>
+        <p style="margin-top: 10px;">
+          This section of the Page is currently under development. Some features are not yet available, and may not be fully functional.
+        </p>
+
+        <div class="under-dev">
+          <p>🛠️ Features in this page are being built. Stay tuned for updates!</p>
+        </div>
+
+      <hr style="margin: 20px 0;">
+
+      <h4 style="color: #ff4444;">🚧 Under Development</h4>
+      <p>
+        Contact me on Discord for updates:<br>
+        <a href="https://discordapp.com/users/1062044543874240633" 
+          style="color:#0078d7; font-weight:bold;" target="_blank">
+          lolenseu
+        </a>
+      </p>
+    </div>
+  </div>
 </div>
 
 <button id="backToTop" class="back-to-top">Back to Top</button>
 
 <script src="{{ asset('js/user/dashboard.js') }}"></script>
+<script>
+  function closePopupModal() {
+    document.getElementById('popupModal').style.display = 'none';
+  }
+</script>
 @endsection
