@@ -13,19 +13,11 @@ use App\Http\Controllers\ReportsController;
 // Redirect root to the login page
 Route::redirect('/', '/login');
 
-// Authentication routes (login/logout only - register redirected to login)
+// Authentication routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
-
-// Redirect ALL registration attempts to login
-Route::get('/register', function () {
-    return redirect('/login')->with('error', 'Registration is disabled.');
-})->name('register');
-
-Route::post('/register', function () {
-    return redirect('/login')->with('error', 'Registration is disabled.');
-});
-
+Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Protected routes

@@ -11,9 +11,9 @@
 
   <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/256/5735/5735191.png">
   @yield('css')
-  <meta http-equiv="Cache-Control" content="public, max-age=86400">
-  <meta http-equiv="Pragma" content="cache">
-  <meta http-equiv="Expires" content="Sun, 31 Dec 2030 23:59:59 GMT">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
 </head>
 <body>
   <!-- Animated Background -->
